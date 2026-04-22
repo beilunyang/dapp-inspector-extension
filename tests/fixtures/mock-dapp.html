@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Mock DApp</title></head>
+<body>
+  <h1>Mock DApp</h1>
+  <button id="chain">eth_chainId</button>
+  <button id="block">eth_blockNumber</button>
+  <button id="sign">personal_sign</button>
+  <button id="tx">eth_sendTransaction (reject)</button>
+  <div id="log"></div>
+  <script src="./mock-provider.js"></script>
+  <script>
+    const log = (s) => { const d = document.createElement('div'); d.textContent = s; document.getElementById('log').appendChild(d); };
+    document.getElementById('chain').onclick = async () => log('chain: ' + await window.ethereum.request({ method: 'eth_chainId' }));
+    document.getElementById('block').onclick = async () => log('block: ' + await window.ethereum.request({ method: 'eth_blockNumber' }));
+    document.getElementById('sign').onclick = async () => log('sign: ' + (await window.ethereum.request({ method: 'personal_sign', params: ['hi', '0x1234'] })).slice(0, 20));
+    document.getElementById('tx').onclick = async () => { try { await window.ethereum.request({ method: 'eth_sendTransaction', params: [{}] }); } catch (e) { log('tx err: ' + e.message); } };
+  </script>
+</body>
+</html>
