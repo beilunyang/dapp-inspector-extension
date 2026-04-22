@@ -10,7 +10,7 @@ export const DEFAULT_SETTINGS: Settings = {
     'eth_getBlockByNumber',
     'net_version',
   ],
-  accent: 'violet',
+  accent: 'indigo',
 };
 
 const KEY = 'dapp-inspector:settings';
