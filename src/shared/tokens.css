@@ -1,35 +1,176 @@
+@import '@fontsource/inter-tight/400.css';
+@import '@fontsource/inter-tight/500.css';
+@import '@fontsource/inter-tight/600.css';
+@import '@fontsource/inter-tight/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root, .theme-light {
-  --bg:              255 255 255;
-  --surface:         248 249 251;
-  --elevated:        255 255 255;
-  --border:          229 231 235;
-  --fg:              20 23 28;
-  --muted:           107 114 128;
-  --accent:          86 66 214;
-  --accent-fg:       255 255 255;
-  --kind-read:       100 116 139;
-  --kind-write:      217 119 6;
-  --kind-sign:       139 92 246;
-  --kind-subscribe:  14 165 233;
+/* DApp Inspector — design tokens.
+   sRGB decimal channels so Tailwind's `rgb(var(--x) / <alpha>)` works.
+   Values are approximations of the prototype's OKLCH palette. */
+
+:root, .theme-dark {
+  --bg:              28 30 34;
+  --surface:         34 37 42;
+  --surface-2:       42 45 51;
+  --surface-hi:      50 54 61;
+  --border:          55 59 67;
+  --border-soft:     43 47 54;
+
+  --fg:              242 243 246;
+  --fg-muted:        169 172 179;
+  --fg-dim:          122 125 133;
+
+  --accent:          128 212 231;
+  --accent-2:        155 147 246;
+  --accent-fg:       36 46 52;
+
+  --amber:           224 180 91;
+  --violet:          200 145 226;
+  --red:             231 106 99;
+  --green:           112 205 150;
+
+  --kind-read:       169 172 179;
+  --kind-write:      224 180 91;
+  --kind-sign:       200 145 226;
+  --kind-subscribe:  128 212 231;
+
+  --j-key:           167 193 210;
+  --j-string:        149 209 152;
+  --j-number:        230 190 139;
+  --j-boolean:       211 162 219;
+  --j-null:          134 137 143;
+  --j-punct:         122 125 133;
 }
 
-.theme-dark {
-  --bg:              14 16 19;
-  --surface:         24 26 30;
-  --elevated:        32 34 38;
-  --border:          51 54 59;
-  --fg:              229 231 235;
-  --muted:           148 156 166;
-  --accent:          167 139 250;
-  --accent-fg:       14 16 19;
-  --kind-read:       148 163 184;
-  --kind-write:      251 191 36;
-  --kind-sign:       196 181 253;
-  --kind-subscribe:  56 189 248;
+.theme-light {
+  --bg:              253 253 253;
+  --surface:         251 251 251;
+  --surface-2:       245 245 246;
+  --surface-hi:      235 236 237;
+  --border:          221 221 222;
+  --border-soft:     235 236 237;
+
+  --fg:              44 47 52;
+  --fg-muted:        105 108 113;
+  --fg-dim:          150 153 158;
+
+  --accent:          53 149 181;
+  --accent-2:        125 101 207;
+  --accent-fg:       253 253 253;
+
+  --amber:           194 139 63;
+  --violet:          185 98 205;
+  --red:             200 77 70;
+  --green:           59 161 110;
+
+  --kind-read:       105 108 113;
+  --kind-write:      194 139 63;
+  --kind-sign:       185 98 205;
+  --kind-subscribe:  53 149 181;
+
+  --j-key:           47 116 163;
+  --j-string:        51 138 93;
+  --j-number:        179 120 69;
+  --j-boolean:       154 63 179;
+  --j-null:          138 141 146;
+  --j-punct:         130 133 139;
 }
 
-html, body { @apply bg-bg text-fg font-sans antialiased; margin: 0; }
+* { box-sizing: border-box; }
+
+html, body {
+  @apply bg-bg text-fg font-sans antialiased;
+  margin: 0;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-ligatures: none;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font: 500 11px/1 'Inter Tight', sans-serif;
+  background: rgb(var(--surface-2));
+  color: rgb(var(--fg-muted));
+  border: 1px solid rgb(var(--border-soft));
+}
+.chip.mono { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font: 500 12px/1 'Inter Tight', sans-serif;
+  color: rgb(var(--fg));
+  background: rgb(var(--surface-2));
+  border: 1px solid rgb(var(--border));
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+.btn:hover { background: rgb(var(--surface-hi)); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:disabled:hover { background: rgb(var(--surface-2)); }
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: rgb(var(--fg-muted));
+}
+.btn.ghost:hover { background: rgb(var(--surface-2)); color: rgb(var(--fg)); }
+.btn.accent {
+  background: rgb(var(--accent));
+  color: rgb(var(--accent-fg));
+  border-color: rgb(var(--accent));
+}
+.btn.accent:hover { filter: brightness(1.05); }
+.btn.icon {
+  padding: 5px;
+  width: 26px;
+  height: 26px;
+  justify-content: center;
+}
+
+.kbd {
+  font: 500 10.5px/1 'JetBrains Mono', monospace;
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: rgb(var(--fg-muted));
+  background: rgb(var(--surface-2));
+  border: 1px solid rgb(var(--border-soft));
+  box-shadow: 0 1px 0 rgb(var(--border));
+}
+
+.scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--fg-dim));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scroll::-webkit-scrollbar-track { background: transparent; }

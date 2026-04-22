@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@fontsource/inter-tight':
+        specifier: ^5.2.7
+        version: 5.2.7
+      '@fontsource/jetbrains-mono':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@tanstack/react-virtual':
         specifier: ^3.10.8
         version: 3.13.24(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -340,6 +346,12 @@ packages:
   '@eslint/js@8.57.1':
     resolution: {integrity: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
+  '@fontsource/inter-tight@5.2.7':
+    resolution: {integrity: sha512-44TmSfHdNQus/3MWOMIonUEnbxwQhiaFo2sfBJEGIE4c7TN+GO6kfLzsTH4Nu52BC9HDZFl9fPQ6Cwzp9vYTtQ==}
+
+  '@fontsource/jetbrains-mono@5.2.8':
+    resolution: {integrity: sha512-6w8/SG4kqvIMu7xd7wt6x3idn1Qux3p9N62s6G3rfldOUYHpWcc2FKrqf+Vo44jRvqWj2oAtTHrZXEP23oSKwQ==}
 
   '@humanwhocodes/config-array@0.13.0':
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
@@ -2092,6 +2104,10 @@ snapshots:
       - supports-color
 
   '@eslint/js@8.57.1': {}
+
+  '@fontsource/inter-tight@5.2.7': {}
+
+  '@fontsource/jetbrains-mono@5.2.8': {}
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
