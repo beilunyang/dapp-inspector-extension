@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { DEFAULT_SETTINGS } from '@shared/settings';
-import { openDb } from '@shared/idb';
+import type { AdminMsg } from '@shared/messages';
 
 export function Advanced() {
   const t = useT();
@@ -21,9 +21,8 @@ export function Advanced() {
             className="h-8 px-2 text-xs bg-surface border border-border rounded outline-none" />
           <button disabled={clearText !== 'CLEAR'}
             onClick={async () => {
-              const db = await openDb();
-              await db.clearAll();
-              db.close();
+              const msg: AdminMsg = { source: 'dappinsp-admin', kind: 'clear-all' };
+              await chrome.runtime.sendMessage(msg);
               setClearText('');
               alert('History cleared.');
             }}

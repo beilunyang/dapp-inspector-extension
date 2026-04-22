@@ -31,6 +31,9 @@ export type ControlMsg =
   | { source: 'dappinsp-ctrl'; kind: 'monitoring'; enabled: boolean }
   | { source: 'dappinsp-ctrl'; kind: 'ignored-methods'; list: string[] };
 
+export type AdminMsg =
+  | { source: 'dappinsp-admin'; kind: 'clear-all' };
+
 export type PanelPush =
   | { kind: 'snapshot'; calls: CapturedCall[]; provenance: TabProvenance }
   | { kind: 'append'; call: CapturedCall }
