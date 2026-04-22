@@ -75,6 +75,8 @@ export const zh: I18nDict = {
       theme: '主题',
       themeSystem: '跟随系统', themeLight: '浅色', themeDark: '深色',
       themeHint: '选择「跟随系统」将自动随操作系统外观切换。',
+      accent: '强调色',
+      accentHint: '用于选中态、高亮和吉祥物渐变。',
       monByDefault: '默认开启监控',
       monByDefaultDesc: '打开 DApp 标签页时自动开始记录。',
       badge: '工具栏徽标',

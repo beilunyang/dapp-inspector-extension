@@ -2,6 +2,7 @@ import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import type { Theme, Lang } from '@shared/types';
 import { Icon } from '@shared/ui/Icon';
+import { ACCENTS, ACCENT_ORDER } from '@shared/accents';
 import { PageTitle, SectionTitle, Row, MiniToggle } from '../primitives';
 
 const THEMES: { id: Theme; labelKey: string; bgA: string; bgB: string }[] = [
@@ -19,6 +20,7 @@ export function General() {
   const t = useT();
   const theme = useSettingsStore(s => s.theme);
   const lang = useSettingsStore(s => s.lang);
+  const accent = useSettingsStore(s => s.accent);
   const monitoring = useSettingsStore(s => s.monitoring);
   const update = useSettingsStore(s => s.update);
 
@@ -67,6 +69,38 @@ export function General() {
       </div>
       <div className="text-[11.5px] mb-5" style={{ color: 'rgb(var(--fg-muted))' }}>
         {t('options.general.themeHint')}
+      </div>
+
+      <SectionTitle>{t('options.general.accent')}</SectionTitle>
+      <div className="flex items-center gap-[10px] mb-[6px]">
+        {ACCENT_ORDER.map(id => {
+          const p = ACCENTS[id];
+          const swatch = theme === 'light' ? p.light : p.dark;
+          const isActive = accent === id;
+          return (
+            <button
+              key={id}
+              onClick={() => update({ accent: id })}
+              title={p.label[lang]}
+              aria-label={p.label[lang]}
+              aria-pressed={isActive}
+              style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: `rgb(${swatch})`,
+                border: isActive ? '2px solid rgb(var(--fg))' : '2px solid transparent',
+                boxShadow: isActive ? '0 0 0 1px rgb(var(--surface))' : 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            />
+          );
+        })}
+        <span className="text-[12px] ml-2" style={{ color: 'rgb(var(--fg-muted))' }}>
+          {ACCENTS[accent].label[lang]}
+        </span>
+      </div>
+      <div className="text-[11.5px] mb-5" style={{ color: 'rgb(var(--fg-muted))' }}>
+        {t('options.general.accentHint')}
       </div>
 
       <Row
