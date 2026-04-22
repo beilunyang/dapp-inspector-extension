@@ -19,6 +19,12 @@ export function createPortHub(storeReady: Promise<BgStore>) {
     }
   }
 
+  function broadcastPanels(msg: PanelPush) {
+    for (const p of panels) {
+      try { p.port.postMessage(msg); } catch { /* port closed */ }
+    }
+  }
+
   async function pushPopup(monitoring: boolean) {
     const store = await storeReady;
     for (const p of popups) {
@@ -66,5 +72,5 @@ export function createPortHub(storeReady: Promise<BgStore>) {
     }
   });
 
-  return { pushPanel, pushPopup };
+  return { pushPanel, pushPopup, broadcastPanels };
 }

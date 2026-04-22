@@ -2,7 +2,7 @@ import { createStore, type BgStore } from './store';
 import { createTabTracker } from './tabs';
 import { createPortHub } from './ports';
 import { loadSettings, SETTINGS_KEY, DEFAULT_SETTINGS } from '@shared/settings';
-import type { PageMsg, ControlMsg } from '@shared/messages';
+import type { PageMsg, ControlMsg, AdminMsg } from '@shared/messages';
 import type { CapturedCall, Settings } from '@shared/types';
 import { classify } from '@shared/classify';
 
@@ -17,23 +17,35 @@ const ports = createPortHub(storeReady);
 let settings: Settings = DEFAULT_SETTINGS;
 void loadSettings().then((s) => { settings = s; });
 
-chrome.runtime.onMessage.addListener((msg: PageMsg, sender) => {
+chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
   void (async () => {
+    // Admin messages can arrive from any extension surface (no sender.tab)
+    if (msg && (msg as AdminMsg).source === 'dappinsp-admin') {
+      const store = await storeReady;
+      if ((msg as AdminMsg).kind === 'clear-all') {
+        await store.clearAll();
+        ports.broadcastPanels({ kind: 'clear' });
+        await ports.pushPopup(settings.monitoring);
+      }
+      return;
+    }
+
     const tabId = sender.tab?.id;
     const origin = sender.tab?.url ? new URL(sender.tab.url).origin : '';
-    if (!tabId || msg?.source !== 'dappinsp') return;
+    if (!tabId || (msg as PageMsg)?.source !== 'dappinsp') return;
 
     const [store, tracker] = await Promise.all([storeReady, trackerReady]);
+    const pageMsg = msg as PageMsg;
 
-    if (msg.kind === 'provider') {
-      const prov = await tracker.onProvider(tabId, msg.payload, origin);
+    if (pageMsg.kind === 'provider') {
+      const prov = await tracker.onProvider(tabId, pageMsg.payload, origin);
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
-    } else if (msg.kind === 'call:start') {
+    } else if (pageMsg.kind === 'call:start') {
       const call: CapturedCall = {
-        id: msg.payload.id, tabId, origin,
-        providerInfo: msg.payload.providerInfo,
-        method: msg.payload.method, kind: classify(msg.payload.method),
-        params: msg.payload.params, startedAt: msg.payload.startedAt,
+        id: pageMsg.payload.id, tabId, origin,
+        providerInfo: pageMsg.payload.providerInfo,
+        method: pageMsg.payload.method, kind: classify(pageMsg.payload.method),
+        params: pageMsg.payload.params, startedAt: pageMsg.payload.startedAt,
         status: 'pending',
       };
       await store.append(call);
@@ -41,24 +53,24 @@ chrome.runtime.onMessage.addListener((msg: PageMsg, sender) => {
       ports.pushPanel(tabId, { kind: 'append', call });
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
       await ports.pushPopup(settings.monitoring);
-    } else if (msg.kind === 'call:end') {
+    } else if (pageMsg.kind === 'call:end') {
       const patch: Partial<CapturedCall> = {
-        status: 'ok', endedAt: msg.payload.endedAt,
-        durationMs: msg.payload.durationMs, result: msg.payload.result,
+        status: 'ok', endedAt: pageMsg.payload.endedAt,
+        durationMs: pageMsg.payload.durationMs, result: pageMsg.payload.result,
       };
-      const updated = await store.patch(msg.payload.id, patch);
-      if (updated?.method === 'eth_chainId' && typeof msg.payload.result === 'string') {
+      const updated = await store.patch(pageMsg.payload.id, patch);
+      if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
         await tracker.onProvider(tabId, updated.providerInfo, origin);
       }
-      ports.pushPanel(tabId, { kind: 'update', id: msg.payload.id, patch });
+      ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await ports.pushPopup(settings.monitoring);
-    } else if (msg.kind === 'call:error') {
+    } else if (pageMsg.kind === 'call:error') {
       const patch: Partial<CapturedCall> = {
-        status: 'error', endedAt: msg.payload.endedAt,
-        durationMs: msg.payload.durationMs, error: msg.payload.error,
+        status: 'error', endedAt: pageMsg.payload.endedAt,
+        durationMs: pageMsg.payload.durationMs, error: pageMsg.payload.error,
       };
-      await store.patch(msg.payload.id, patch);
-      ports.pushPanel(tabId, { kind: 'update', id: msg.payload.id, patch });
+      await store.patch(pageMsg.payload.id, patch);
+      ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await ports.pushPopup(settings.monitoring);
     }
   })();
@@ -69,6 +81,8 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   void (async () => {
     const tracker = await trackerReady;
     await tracker.onTabRemoved(tabId);
+    ports.pushPanel(tabId, { kind: 'clear' });
+    await ports.pushPopup(settings.monitoring);
   })();
 });
 
