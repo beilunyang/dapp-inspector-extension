@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root, .theme-light {
+  --bg:              255 255 255;
+  --surface:         248 249 251;
+  --elevated:        255 255 255;
+  --border:          229 231 235;
+  --fg:              20 23 28;
+  --muted:           107 114 128;
+  --accent:          86 66 214;
+  --accent-fg:       255 255 255;
+  --kind-read:       100 116 139;
+  --kind-write:      217 119 6;
+  --kind-sign:       139 92 246;
+  --kind-subscribe:  14 165 233;
+}
+
+.theme-dark {
+  --bg:              14 16 19;
+  --surface:         24 26 30;
+  --elevated:        32 34 38;
+  --border:          51 54 59;
+  --fg:              229 231 235;
+  --muted:           148 156 166;
+  --accent:          167 139 250;
+  --accent-fg:       14 16 19;
+  --kind-read:       148 163 184;
+  --kind-write:      251 191 36;
+  --kind-sign:       196 181 253;
+  --kind-subscribe:  14 165 233;
+}
+
+html, body { @apply bg-bg text-fg font-sans antialiased; margin: 0; }
