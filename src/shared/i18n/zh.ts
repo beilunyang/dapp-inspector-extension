@@ -4,18 +4,44 @@ export const zh: I18nDict = {
   panel: {
     count: '{n} 条调用',
     toolbar: {
-      search: '搜索',
+      search: '按方法或来源筛选',
       clear: '清空',
+      export: '导出',
       settings: '设置',
       monitoring: '监控',
+      record: '记录',
+      pause: '暂停',
       filter: { kind: '类型', origin: '来源', chain: '链' },
+    },
+    filters: {
+      all: '全部', read: '读取', write: '写入', sign: '签名',
+      errors: '错误', mocked: '模拟',
     },
     list: { method: '方法', origin: '来源', status: '状态', duration: '耗时', ts: '时间' },
     detail: {
       tabs: { params: '参数', result: '返回值', timing: '耗时', raw: '原始数据' },
+      sec: {
+        params: '请求参数',
+        result: '返回值',
+        timing: '耗时分解 · {n} 毫秒',
+        raw: '原始 JSON-RPC 报文',
+      },
+      timing: {
+        dapp: 'DApp 发送',
+        queue: '扩展排队',
+        approval: '钱包授权',
+        rpc: 'RPC 往返',
+        return: '返回给 DApp',
+      },
       replay: '重放', mock: '模拟', block: '拦截',
       disabledHint: 'P1 功能 — 即将推出',
       empty: '选择一条调用查看详情',
+    },
+    status: {
+      connected: '已连接',
+      idle: '空闲',
+      total: '{n} 条记录',
+      shortcut: '搜索 · {k}',
     },
     empty: {
       waiting: { title: '等待调用', hint: '在 DApp 上操作以捕获 RPC 活动' },

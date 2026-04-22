@@ -3,9 +3,6 @@ import { useViewStore } from './stores/view-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { useT } from '@shared/stores/i18n-store';
 import { Icon } from '@shared/ui/Icon';
-import type { Kind } from '@shared/types';
-
-const KINDS: Kind[] = ['read', 'write', 'sign', 'subscribe'];
 
 export function Toolbar({ onClear }: { onClear: () => void }) {
   const t = useT();
@@ -13,43 +10,64 @@ export function Toolbar({ onClear }: { onClear: () => void }) {
   const update = useSettingsStore(s => s.update);
   const count = useCapturesStore(s => s.calls.length);
   const search = useViewStore(s => s.search);
-  const kinds = useViewStore(s => s.kinds);
   const setSearch = useViewStore(s => s.setSearch);
-  const toggleKind = useViewStore(s => s.toggleKind);
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-surface">
+    <div
+      className="flex items-center gap-[6px] h-10 px-[10px] flex-shrink-0"
+      style={{
+        background: 'rgb(var(--surface))',
+        borderBottom: '1px solid rgb(var(--border))',
+      }}
+    >
       <button
-        className={`inline-flex items-center gap-2 text-xs px-2 h-7 rounded border ${monitoring ? 'border-accent text-accent' : 'border-border text-muted'}`}
+        className="btn icon ghost"
+        title={monitoring ? t('panel.toolbar.pause') : t('panel.toolbar.record')}
         onClick={() => update({ monitoring: !monitoring })}
-        aria-pressed={monitoring}
+        style={{ color: monitoring ? 'rgb(var(--red))' : 'rgb(var(--fg-muted))' }}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${monitoring ? 'bg-accent' : 'bg-muted'}`} />
-        {t('panel.toolbar.monitoring')}
+        <span className="dot" style={{ width: 8, height: 8 }} />
       </button>
-      <div className="flex items-center h-7 px-2 rounded border border-border bg-elevated text-xs">
-        <Icon name="search" size={12} />
+      <button className="btn icon ghost" title={t('panel.toolbar.clear')} onClick={onClear}>
+        <Icon name="clear" size={14} />
+      </button>
+      <button className="btn icon ghost" title={t('panel.toolbar.export')} disabled>
+        <Icon name="download" size={14} />
+      </button>
+      <div style={{ width: 1, height: 18, background: 'rgb(var(--border))', margin: '0 4px' }} />
+
+      <div
+        className="flex items-center gap-2 flex-1 h-[26px] px-[10px]"
+        style={{
+          maxWidth: 420,
+          background: 'rgb(var(--bg))',
+          border: '1px solid rgb(var(--border))',
+          borderRadius: 6,
+          color: 'rgb(var(--fg-muted))',
+        }}
+      >
+        <Icon name="search" size={13} />
         <input
-          className="ml-2 bg-transparent outline-none w-40 placeholder:text-muted"
-          placeholder={t('panel.toolbar.search')}
           value={search}
           onChange={e => setSearch(e.target.value)}
+          placeholder={t('panel.toolbar.search')}
+          className="flex-1 bg-transparent border-0 outline-none"
+          style={{ color: 'rgb(var(--fg))', font: '400 12.5px/1 Inter Tight, sans-serif' }}
         />
+        <span className="kbd">⌘F</span>
       </div>
-      <div className="flex items-center gap-1">
-        {KINDS.map(k => (
-          <button key={k}
-            className={`px-1.5 h-6 text-[10px] font-semibold rounded border ${kinds.has(k) ? 'border-accent text-accent' : 'border-border text-muted'}`}
-            onClick={() => toggleKind(k)}
-          >{k.toUpperCase().slice(0, 2)}</button>
-        ))}
-      </div>
+
       <div className="flex-1" />
-      <span className="text-[11px] text-muted">{t('panel.count', { n: count })}</span>
-      <button onClick={onClear} className="inline-flex items-center gap-1 text-xs text-muted hover:text-fg" title={t('panel.toolbar.clear')}>
-        <Icon name="clear" size={14} /> {t('panel.toolbar.clear')}
-      </button>
-      <button onClick={() => chrome.runtime.openOptionsPage()} className="inline-flex items-center gap-1 text-xs text-muted hover:text-fg" title={t('panel.toolbar.settings')}>
+
+      <div className="mono text-[11.5px]" style={{ color: 'rgb(var(--fg-dim))' }}>
+        {t('panel.count', { n: count })}
+      </div>
+      <div style={{ width: 1, height: 18, background: 'rgb(var(--border))', margin: '0 4px' }} />
+      <button
+        className="btn icon ghost"
+        title={t('panel.toolbar.settings')}
+        onClick={() => chrome.runtime.openOptionsPage()}
+      >
         <Icon name="settings" size={14} />
       </button>
     </div>
