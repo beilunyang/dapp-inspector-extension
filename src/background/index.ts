@@ -6,10 +6,11 @@ import type { PageMsg, ControlMsg } from '@shared/messages';
 import type { CapturedCall, Settings } from '@shared/types';
 import { classify } from '@shared/classify';
 
-const storeReady = createStore();
-let settings: Settings = await loadSettings();
+void (async () => {
+  const storeReady = createStore();
+  let settings: Settings = await loadSettings();
 
-const hub = storeReady.then((store) => {
+  const store = await storeReady;
   const tracker = createTabTracker(store);
   const ports = createPortHub(store);
 
@@ -84,8 +85,4 @@ const hub = storeReady.then((store) => {
   chrome.runtime.onInstalled.addListener((d) => {
     if (d.reason === 'install') chrome.runtime.openOptionsPage();
   });
-
-  return ports;
-});
-
-void hub;
+})();
