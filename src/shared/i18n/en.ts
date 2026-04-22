@@ -73,6 +73,8 @@ export const en = {
       theme: 'Theme',
       themeSystem: 'System', themeLight: 'Light', themeDark: 'Dark',
       themeHint: 'Follows the system appearance when "System" is selected.',
+      accent: 'Accent color',
+      accentHint: 'Used for selections, highlights, and the mascot gradient.',
       monByDefault: 'Monitor by default',
       monByDefaultDesc: 'Start recording as soon as a DApp tab opens.',
       badge: 'Toolbar badge',
