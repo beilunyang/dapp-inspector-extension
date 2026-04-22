@@ -14,6 +14,7 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "noEmit": true,
     "types": ["chrome", "node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {

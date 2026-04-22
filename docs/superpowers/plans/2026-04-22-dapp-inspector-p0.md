@@ -103,6 +103,7 @@ coverage/
 playwright-report/
 test-results/
 .env.local
+*.tsbuildinfo
 ```
 
 - [ ] **Step 3: Initialize pnpm and create `package.json`**
@@ -179,6 +180,7 @@ Then overwrite `package.json`:
     "isolatedModules": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "noEmit": true,
     "types": ["chrome", "node", "vitest/globals"],
     "baseUrl": ".",
     "paths": {
