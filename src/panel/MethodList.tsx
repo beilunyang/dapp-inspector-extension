@@ -2,28 +2,31 @@ import { useMemo, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCapturesStore } from './stores/captures-store';
 import { useViewStore } from './stores/view-store';
-import { Kind } from '@shared/ui/Kind';
-import { Badge } from '@shared/ui/Badge';
 import { useT } from '@shared/stores/i18n-store';
-import type { CapturedCall } from '@shared/types';
+import type { CapturedCall, Kind } from '@shared/types';
 
 const ROW_HEIGHT = 28;
 
-function relative(ts: number): string {
-  const dt = Date.now() - ts;
-  if (dt < 1000) return 'now';
-  if (dt < 60_000) return `${Math.floor(dt / 1000)}s`;
-  if (dt < 3_600_000) return `${Math.floor(dt / 60_000)}m`;
-  return `${Math.floor(dt / 3_600_000)}h`;
-}
+const KIND_STYLE: Record<Kind, { label: string; color: string }> = {
+  read:      { label: 'RD', color: 'rgb(var(--fg-muted))' },
+  write:     { label: 'WR', color: 'rgb(var(--amber))' },
+  sign:      { label: 'SG', color: 'rgb(var(--violet))' },
+  subscribe: { label: 'SB', color: 'rgb(var(--accent))' },
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  ok:      'rgb(var(--green))',
+  error:   'rgb(var(--red))',
+  pending: 'rgb(var(--accent))',
+};
 
 export function MethodList() {
+  const t = useT();
   const calls = useCapturesStore(s => s.calls);
   const search = useViewStore(s => s.search);
   const kinds = useViewStore(s => s.kinds);
   const selectedId = useViewStore(s => s.selectedCallId);
   const select = useViewStore(s => s.select);
-  const t = useT();
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -36,23 +39,49 @@ export function MethodList() {
 
   const parentRef = useRef<HTMLDivElement>(null);
   const virt = useVirtualizer({
-    count: filtered.length, getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_HEIGHT, overscan: 10,
+    count: filtered.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 10,
   });
 
   return (
-    <div className="w-[420px] border-r border-border flex flex-col bg-bg">
-      <div className="h-7 flex items-center px-3 text-[10px] uppercase tracking-wide text-muted border-b border-border">
-        <span className="w-6">&nbsp;</span>
-        <span className="flex-1">{t('panel.list.method')}</span>
-        <span className="w-12 text-right">{t('panel.list.duration')}</span>
-        <span className="w-10 text-right">{t('panel.list.ts')}</span>
+    <div
+      className="scroll flex flex-col overflow-hidden flex-shrink-0"
+      style={{ width: 360, borderRight: '1px solid rgb(var(--border))' }}
+    >
+      {/* Column header */}
+      <div
+        className="flex items-center flex-shrink-0 uppercase"
+        style={{
+          height: 26,
+          padding: '0 12px',
+          fontSize: 10.5,
+          fontWeight: 500,
+          color: 'rgb(var(--fg-dim))',
+          letterSpacing: 0.4,
+          background: 'rgb(var(--surface))',
+          borderBottom: '1px solid rgb(var(--border-soft))',
+        }}
+      >
+        <div className="flex-1">{t('panel.list.method')}</div>
+        <div style={{ width: 60, textAlign: 'right' }}>{t('panel.list.duration')}</div>
       </div>
-      <div ref={parentRef} className="flex-1 overflow-auto" role="list">
-        <div style={{ height: virt.getTotalSize(), position: 'relative' }}>
+
+      {/* Rows */}
+      <div ref={parentRef} className="scroll flex-1 overflow-auto" role="list">
+        <div style={{ height: virt.getTotalSize(), position: 'relative', width: '100%' }}>
           {virt.getVirtualItems().map(v => {
             const c = filtered[v.index];
-            return <Row key={c.id} call={c} selected={c.id === selectedId} onClick={() => select(c.id)} offset={v.start} />;
+            return (
+              <Row
+                key={c.id}
+                call={c}
+                selected={c.id === selectedId}
+                onClick={() => select(c.id)}
+                offset={v.start}
+              />
+            );
           })}
         </div>
       </div>
@@ -60,21 +89,73 @@ export function MethodList() {
   );
 }
 
-function Row({ call, selected, onClick, offset }: { call: CapturedCall; selected: boolean; onClick: () => void; offset: number }) {
+function Row({ call, selected, onClick, offset }: {
+  call: CapturedCall;
+  selected: boolean;
+  onClick: () => void;
+  offset: number;
+}) {
+  const kc = KIND_STYLE[call.kind];
+  const statusColor = STATUS_COLOR[call.status] ?? STATUS_COLOR.ok;
   return (
-    <button
+    <div
       role="listitem"
       onClick={onClick}
-      className={`absolute left-0 right-0 h-7 flex items-center px-3 text-xs text-left ${selected ? 'bg-accent/10 text-fg' : 'hover:bg-surface text-fg'}`}
-      style={{ transform: `translateY(${offset}px)` }}
+      className="flex items-center cursor-pointer"
+      style={{
+        position: 'absolute',
+        left: 0, right: 0,
+        height: ROW_HEIGHT,
+        transform: `translateY(${offset}px)`,
+        padding: '0 12px 0 10px',
+        gap: 8,
+        fontSize: 12,
+        color: selected ? 'rgb(var(--fg))' : 'rgb(var(--fg-muted))',
+        background: selected ? 'rgb(var(--accent) / 0.18)' : 'transparent',
+        borderLeft: `2px solid ${selected ? 'rgb(var(--accent))' : 'transparent'}`,
+        borderBottom: '1px solid rgb(var(--border-soft))',
+      }}
+      onMouseEnter={e => !selected && (e.currentTarget.style.background = 'rgb(var(--surface))')}
+      onMouseLeave={e => !selected && (e.currentTarget.style.background = 'transparent')}
     >
-      <Kind kind={call.kind} />
-      <span className="ml-2 flex-1 truncate font-mono">{call.method}</span>
-      {call.status === 'pending' ? <Badge tone="warn">…</Badge>
-        : call.status === 'error' ? <Badge tone="error">ERR</Badge>
-        : <Badge tone="ok">OK</Badge>}
-      <span className="w-12 text-right text-muted">{call.durationMs != null ? `${Math.round(call.durationMs)}ms` : '—'}</span>
-      <span className="w-10 text-right text-muted">{relative(call.startedAt)}</span>
-    </button>
+      <span
+        className="mono inline-flex items-center justify-center"
+        style={{
+          fontSize: 9.5,
+          fontWeight: 600,
+          padding: '2px 4px',
+          borderRadius: 3,
+          color: kc.color,
+          background: `color-mix(in oklab, ${kc.color} 14%, transparent)`,
+          width: 22,
+          letterSpacing: 0.3,
+        }}
+      >
+        {kc.label}
+      </span>
+      <span
+        className="mono flex-1 truncate"
+        style={{
+          color: selected ? 'rgb(var(--fg))' : (call.status === 'error' ? 'rgb(var(--red))' : 'rgb(var(--fg-muted))'),
+          fontSize: 11.5,
+        }}
+      >
+        {call.method}
+      </span>
+      {call.status !== 'ok' && (
+        <span className="dot" style={{ color: statusColor }} />
+      )}
+      <span
+        className="mono"
+        style={{ width: 56, textAlign: 'right', color: 'rgb(var(--fg-dim))', fontSize: 10.5 }}
+      >
+        {fmtTime(call.durationMs)}
+      </span>
+    </div>
   );
+}
+
+function fmtTime(ms: number | undefined): string {
+  if (ms == null) return '—';
+  return ms < 1000 ? `${ms.toFixed(1)}ms` : `${(ms / 1000).toFixed(2)}s`;
 }

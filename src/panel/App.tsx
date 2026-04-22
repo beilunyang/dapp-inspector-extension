@@ -4,9 +4,11 @@ import type { PanelPush, PanelReq } from '@shared/messages';
 import { useCapturesStore } from './stores/captures-store';
 import { useViewStore } from './stores/view-store';
 import { Toolbar } from './Toolbar';
+import { FilterBar } from './FilterBar';
 import { MethodList } from './MethodList';
 import { DetailPane } from './Detail/DetailPane';
 import { EmptyStates } from './EmptyStates';
+import { StatusBar } from './StatusBar';
 
 export function App({ tabId }: { tabId: number }) {
   const apply = useCapturesStore(s => s.apply);
@@ -25,16 +27,23 @@ export function App({ tabId }: { tabId: number }) {
   const showList = calls.length > 0 || (provenance?.hasDapp ?? false);
 
   return (
-    <div className="h-full flex flex-col bg-bg text-fg">
+    <div
+      className="ui h-full flex flex-col overflow-hidden text-[13px]"
+      style={{ background: 'rgb(var(--bg))', color: 'rgb(var(--fg))' }}
+    >
       <Toolbar onClear={() => send({ kind: 'clear' })} />
+      <FilterBar />
       {!showList ? (
-        <EmptyStates variant="waiting" />
+        <div className="flex-1 min-h-0">
+          <EmptyStates variant="waiting" />
+        </div>
       ) : (
         <div className="flex-1 flex min-h-0">
           <MethodList />
           <DetailPane selectedId={selectedId} />
         </div>
       )}
+      <StatusBar />
     </div>
   );
 }
