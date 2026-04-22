@@ -29,7 +29,7 @@
   --kind-read:       148 163 184;
   --kind-write:      251 191 36;
   --kind-sign:       196 181 253;
-  --kind-subscribe:  14 165 233;
+  --kind-subscribe:  56 189 248;
 }
 
 html, body { @apply bg-bg text-fg font-sans antialiased; margin: 0; }
