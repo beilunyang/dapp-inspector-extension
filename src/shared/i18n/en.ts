@@ -54,6 +54,6 @@ export const en = {
     about: { version: 'Version', links: 'Resources', changelog: 'Changelog' },
   },
   common: { on: 'On', off: 'Off', cancel: 'Cancel', confirm: 'Confirm', save: 'Save' },
-} as const;
+};
 
 export type I18nDict = typeof en;
