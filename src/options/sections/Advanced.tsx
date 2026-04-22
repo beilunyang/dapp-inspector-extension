@@ -3,42 +3,181 @@ import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { DEFAULT_SETTINGS } from '@shared/settings';
 import type { AdminMsg } from '@shared/messages';
+import { Icon } from '@shared/ui/Icon';
+import { PageTitle, SectionTitle, Row, MiniToggle } from '../primitives';
+
+const EXPORT_FORMATS = [
+  { id: 'har',  label: 'HAR',      descKey: 'advanced.exp.harDesc' },
+  { id: 'json', label: 'JSON-RPC', descKey: 'advanced.exp.jsonDesc' },
+  { id: 'curl', label: 'cURL',     descKey: 'advanced.exp.curlDesc' },
+] as const;
+
+type FormatId = typeof EXPORT_FORMATS[number]['id'];
+
+const FORMAT_DESC: Record<FormatId, { en: string; zh: string }> = {
+  har:  { en: 'Chrome DevTools native',  zh: 'Chrome DevTools 原生' },
+  json: { en: 'Structured batch',        zh: '结构化批量' },
+  curl: { en: 'CLI replay',              zh: '命令行重放' },
+};
 
 export function Advanced() {
   const t = useT();
+  const lang = useSettingsStore(s => s.lang);
   const update = useSettingsStore(s => s.update);
+  const [fmt, setFmt] = useState<FormatId>('har');
   const [clearText, setClearText] = useState('');
 
   return (
-    <section className="space-y-6">
-      <h1 className="text-xl font-semibold">{t('options.nav.advanced')}</h1>
+    <div>
+      <PageTitle title={t('options.nav.advanced')} subtitle={t('options.advanced.sub')} />
 
-      <div className="p-4 border border-red-500/30 rounded">
-        <div className="text-sm font-medium">{t('options.advanced.clearHistory')}</div>
-        <div className="mt-2 flex items-center gap-2">
-          <input value={clearText} onChange={e => setClearText(e.target.value)}
+      <Row
+        title={t('options.advanced.devLogs')}
+        desc={t('options.advanced.devLogsDesc')}
+        control={<MiniToggle value={false} />}
+      />
+
+      {/* Export format — segmented cards */}
+      <SectionTitle>{t('options.advanced.export')}</SectionTitle>
+      <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        {EXPORT_FORMATS.map(f => {
+          const isActive = fmt === f.id;
+          return (
+            <div
+              key={f.id}
+              onClick={() => setFmt(f.id)}
+              className="cursor-pointer"
+              style={{
+                padding: '10px 12px',
+                borderRadius: 7,
+                background: isActive
+                  ? 'color-mix(in oklab, rgb(var(--accent)) 10%, rgb(var(--surface)))'
+                  : 'rgb(var(--surface))',
+                border: isActive ? '1.5px solid rgb(var(--accent))' : '1.5px solid rgb(var(--border-soft))',
+              }}
+            >
+              <div className="flex items-center gap-[6px]">
+                {isActive && <Icon name="check" size={11} style={{ color: 'rgb(var(--accent))' }} />}
+                <span className="text-[12.5px] font-semibold">{f.label}</span>
+              </div>
+              <div className="text-[10.5px] mt-[3px]" style={{ color: 'rgb(var(--fg-muted))' }}>
+                {FORMAT_DESC[f.id][lang]}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-2 mb-5">
+        <button className="btn" disabled>
+          <Icon name="download" size={12} /> {t('options.advanced.exportSession')}
+        </button>
+        <button className="btn ghost" disabled>
+          <Icon name="link" size={12} /> {t('options.advanced.copy')}
+        </button>
+      </div>
+
+      {/* Diagnostics grid */}
+      <SectionTitle>{t('options.advanced.diagnostics')}</SectionTitle>
+      <div
+        className="grid gap-[10px] mb-4"
+        style={{
+          gridTemplateColumns: '1fr 1fr',
+          padding: 12,
+          background: 'rgb(var(--surface))',
+          border: '1px solid rgb(var(--border-soft))',
+          borderRadius: 7,
+          fontSize: 11.5,
+        }}
+      >
+        <DiagItem label={t('options.advanced.version')} value={chrome.runtime.getManifest().version} />
+        <DiagItem label={t('options.advanced.engine')} value={engineLabel()} />
+        <DiagItem label={t('options.advanced.injected')} value="eip-1193 + eip-6963" />
+        <DiagItem label={t('options.advanced.lastError')} value={t('options.advanced.none')} ok />
+      </div>
+
+      {/* Danger zone: clear history */}
+      <div
+        className="mb-3"
+        style={{
+          padding: 14,
+          borderRadius: 8,
+          border: '1px solid color-mix(in oklab, rgb(var(--red)) 35%, transparent)',
+          background: 'color-mix(in oklab, rgb(var(--red)) 6%, rgb(var(--surface)))',
+        }}
+      >
+        <div className="text-[13px] font-semibold mb-[2px]">{t('options.advanced.clearHistory')}</div>
+        <div className="text-[11.5px] mb-[10px]" style={{ color: 'rgb(var(--fg-muted))' }}>
+          {t('options.advanced.clearHistoryHint')}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            value={clearText}
+            onChange={e => setClearText(e.target.value)}
             placeholder={t('options.advanced.clearHistoryConfirm')}
-            className="h-8 px-2 text-xs bg-surface border border-border rounded outline-none" />
-          <button disabled={clearText !== 'CLEAR'}
+            className="mono"
+            style={{
+              height: 28,
+              padding: '0 10px',
+              fontSize: 12,
+              background: 'rgb(var(--bg))',
+              border: '1px solid rgb(var(--border))',
+              borderRadius: 6,
+              color: 'rgb(var(--fg))',
+              outline: 'none',
+              flex: 1,
+              maxWidth: 240,
+            }}
+          />
+          <button
+            disabled={clearText !== 'CLEAR'}
             onClick={async () => {
               const msg: AdminMsg = { source: 'dappinsp-admin', kind: 'clear-all' };
               await chrome.runtime.sendMessage(msg);
               setClearText('');
-              alert('History cleared.');
             }}
-            className="h-8 px-3 text-xs rounded bg-red-500/80 text-white disabled:opacity-40 disabled:cursor-not-allowed">
+            className="btn"
+            style={{
+              background: clearText === 'CLEAR' ? 'rgb(var(--red))' : undefined,
+              color: clearText === 'CLEAR' ? '#fff' : undefined,
+              borderColor: clearText === 'CLEAR' ? 'rgb(var(--red))' : undefined,
+            }}
+          >
             {t('common.confirm')}
           </button>
         </div>
       </div>
 
-      <div className="p-4 border border-border rounded">
-        <div className="text-sm font-medium">{t('options.advanced.resetSettings')}</div>
-        <button onClick={() => update(DEFAULT_SETTINGS)}
-          className="mt-2 h-8 px-3 text-xs rounded border border-border hover:border-accent">
-          {t('common.confirm')}
-        </button>
-      </div>
-    </section>
+      <Row
+        title={t('options.advanced.resetSettings')}
+        desc={t('options.advanced.resetSettingsHint')}
+        control={
+          <button onClick={() => update(DEFAULT_SETTINGS)} className="btn">
+            {t('common.confirm')}
+          </button>
+        }
+      />
+    </div>
   );
+}
+
+function DiagItem({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
+  return (
+    <div>
+      <div
+        className="uppercase mb-[3px] text-[10px] font-semibold"
+        style={{ color: 'rgb(var(--fg-dim))', letterSpacing: 0.5 }}
+      >
+        {label}
+      </div>
+      <div className="mono text-[11.5px] flex items-center gap-[5px]" style={{ color: 'rgb(var(--fg))' }}>
+        {ok && <span className="dot" style={{ color: 'rgb(var(--green))' }} />}
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function engineLabel(): string {
+  const m = /Chrome\/(\d+)/.exec(navigator.userAgent);
+  return m ? `Chromium ${m[1]}` : 'Unknown';
 }
