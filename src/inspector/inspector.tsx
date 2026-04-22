@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@shared/tokens.css';
+import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
 import { ThemeProvider } from '@shared/ui/ThemeProvider';
 import { App } from '../panel/App';
 
@@ -34,5 +35,11 @@ function Root() {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><ThemeProvider><Root /></ThemeProvider></StrictMode>,
+  <StrictMode>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <Root />
+      </ThemeProvider>
+    </ErrorBoundary>
+  </StrictMode>,
 );
