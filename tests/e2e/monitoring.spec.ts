@@ -14,7 +14,7 @@ test('monitoring off suppresses captures', async () => {
     headless: false,
     args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--no-first-run'],
   });
-  let sw = ctx.serviceWorkers()[0] ?? await ctx.waitForEvent('serviceworker');
+  const sw = ctx.serviceWorkers()[0] ?? await ctx.waitForEvent('serviceworker');
   const extId = sw.url().split('/')[2];
 
   const page = await ctx.newPage();
