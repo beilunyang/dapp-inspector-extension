@@ -4,13 +4,12 @@ export const zh: I18nDict = {
   panel: {
     count: '{n} 条调用',
     toolbar: {
-      search: '按方法或来源筛选',
+      search: '按方法筛选',
       clear: '清空',
       settings: '设置',
       monitoring: '监控',
       record: '记录',
       pause: '暂停',
-      filter: { kind: '类型', origin: '来源', chain: '链' },
     },
     filters: {
       all: '全部', read: '读取', write: '写入', sign: '签名', subscribe: '订阅',
