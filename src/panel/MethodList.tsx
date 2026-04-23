@@ -154,16 +154,16 @@ function Row({ call, selected, onClick, offset, t }: {
       >
         {call.method}
       </span>
-      {call.replayed && <Tag color="rgb(var(--accent))" label="REPLAY" title="Replayed call" />}
-      {call.blocked && <Tag color="rgb(var(--amber))" label="BLOCK" title="Blocked by rule" />}
+      {call.replayed && <Tag color="rgb(var(--accent))" label="R" title="Replayed call" />}
+      {call.blocked && <Tag color="rgb(var(--amber))" label="B" title="Blocked by rule" />}
       {call.throttleMs != null && call.throttleMs > 0 && (
         <Tag
           color="rgb(var(--amber))"
-          label="THROTTLE"
+          label="T"
           title={t('panel.list.throttleHint', { n: call.throttleMs })}
         />
       )}
-      {call.mocked && <Tag color="rgb(var(--violet))" label="MOCK" title="Mocked response" />}
+      {call.mocked && <Tag color="rgb(var(--violet))" label="M" title="Mocked response" />}
       {call.status !== 'ok' && !call.mocked && !call.blocked && (
         <span className="dot" style={{ color: statusColor }} />
       )}
