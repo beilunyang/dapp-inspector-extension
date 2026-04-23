@@ -16,6 +16,9 @@ const trackerReady = storeReady.then(createTabTracker);
 let settings: Settings = DEFAULT_SETTINGS;
 void loadSettings().then((s) => { settings = s; });
 
+// Block rules are read directly by each content script from chrome.storage.local
+// (see src/content/index.ts), so the SW doesn't need to cache or broadcast them.
+
 const ports = createPortHub(storeReady, () => settings.monitoring);
 
 chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
@@ -98,18 +101,14 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== 'local' || !changes[SETTINGS_KEY]) return;
+  if (area !== 'local') return;
+  if (!changes[SETTINGS_KEY]) return;
   void (async () => {
     const store = await storeReady;
     settings = await loadSettings();
-    const tabs = await chrome.tabs.query({});
-    for (const t of tabs) {
-      if (t.id == null) continue;
-      const msgMon: ControlMsg = { source: 'dappinsp-ctrl', kind: 'monitoring', enabled: settings.monitoring };
-      const msgIgn: ControlMsg = { source: 'dappinsp-ctrl', kind: 'ignored-methods', list: settings.ignoredMethods };
-      chrome.tabs.sendMessage(t.id, msgMon).catch(() => {});
-      chrome.tabs.sendMessage(t.id, msgIgn).catch(() => {});
-    }
+    // Content scripts observe storage.onChanged themselves and forward to the
+    // page world, so no need to broadcast from here. We just need fresh
+    // settings for our own logic + retention sweep.
     await store.enforceRetention(settings.retentionMax);
   })();
 });

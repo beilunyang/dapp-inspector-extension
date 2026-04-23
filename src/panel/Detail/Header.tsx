@@ -3,6 +3,7 @@ import { Icon } from '@shared/ui/Icon';
 import type { CapturedCall, CallStatus } from '@shared/types';
 import { useT } from '@shared/stores/i18n-store';
 import { ReplayDialog } from './ReplayDialog';
+import { BlockDialog } from './BlockDialog';
 
 const STATUS_COLOR: Record<CallStatus | 'mocked', string> = {
   ok:      'rgb(var(--green))',
@@ -15,6 +16,7 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
   const t = useT();
   const host = safeHost(call.origin);
   const [showReplay, setShowReplay] = useState(false);
+  const [showBlock, setShowBlock] = useState(false);
   return (
     <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid rgb(var(--border-soft))' }}>
       <div className="flex items-center gap-[10px] mb-[10px]">
@@ -35,13 +37,23 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
           <Icon name="replay" size={12} /> {t('panel.detail.replay')}
         </button>
         <DisabledBtn icon="mock" label={t('panel.detail.mock')} />
-        <DisabledBtn icon="block" label={t('panel.detail.block')} />
+        <button
+          className="btn ghost"
+          style={{ fontSize: 12 }}
+          onClick={() => setShowBlock(true)}
+          title={t('panel.detail.block')}
+        >
+          <Icon name="block" size={12} /> {t('panel.detail.block')}
+        </button>
         <button className="btn icon ghost" title="More actions" disabled>
           <Icon name="dot3" size={12} />
         </button>
       </div>
       {showReplay && (
         <ReplayDialog call={call} tabId={call.tabId} onClose={() => setShowReplay(false)} />
+      )}
+      {showBlock && (
+        <BlockDialog call={call} onClose={() => setShowBlock(false)} />
       )}
       <div
         className="flex items-center flex-wrap"
