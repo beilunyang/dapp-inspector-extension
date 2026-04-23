@@ -126,7 +126,7 @@ export const en = {
   },
   options: {
     title: 'Settings',
-    nav: { general: 'General', capture: 'Capture', mock: 'Mock', advanced: 'Advanced', about: 'About' },
+    nav: { general: 'General', capture: 'Capture', mock: 'Mock', block: 'Block', advanced: 'Advanced', about: 'About' },
     general: {
       sub: 'Appearance, language, and keyboard shortcuts',
       theme: 'Theme',
@@ -163,6 +163,19 @@ export const en = {
     },
     mockRules: {
       editTitle: 'Edit mock rule',
+    },
+    blockSec: {
+      sub: 'Block or throttle RPC calls before they reach the wallet',
+      newRule: 'New rule',
+      activeCount: '{active} / {total} active',
+      empty: 'No block/throttle rules yet. Add one from here, or click Block on any captured call.',
+      columnMethod: 'Method',
+      columnOrigin: 'Origin',
+      columnMode: 'Mode',
+      columnValue: 'Value',
+    },
+    blockRules: {
+      editTitle: 'Edit block rule',
     },
     advanced: {
       sub: 'Developer-facing options',

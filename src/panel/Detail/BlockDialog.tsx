@@ -10,10 +10,9 @@ import {
   DEFAULT_BLOCK_ERROR_MESSAGE,
   DEFAULT_THROTTLE_MS,
   type BlockRule,
-  type BlockMode,
-  type MatchMode,
 } from '@shared/rules';
 import type { CapturedCall } from '@shared/types';
+import { BlockRuleForm } from './BlockRuleForm';
 
 export function BlockDialog({
   call, onClose,
@@ -98,7 +97,6 @@ export function BlockDialog({
             {t('panel.block.intro')}
           </div>
 
-          {/* Existing rules */}
           <SectionLabel>{t('panel.block.existingFor')}</SectionLabel>
           {existing.length === 0 ? (
             <div className="text-[11.5px] mb-4 italic" style={{ color: 'rgb(var(--fg-dim))' }}>
@@ -151,71 +149,7 @@ export function BlockDialog({
           )}
 
           <SectionLabel>{t('panel.block.newRule')}</SectionLabel>
-          <div className="grid gap-y-3 gap-x-4 mt-2" style={{ gridTemplateColumns: '120px 1fr' }}>
-            <Label>{t('panel.block.method')}</Label>
-            <div className="flex gap-2 items-center">
-              <TextInput value={form.method} onChange={(v) => setForm({ ...form, method: v })} className="mono flex-1" />
-              <Segmented<MatchMode>
-                value={form.matchMode}
-                onChange={(v) => setForm({ ...form, matchMode: v })}
-                options={[
-                  { id: 'exact',  label: 'exact'  },
-                  { id: 'prefix', label: 'prefix' },
-                  { id: 'glob',   label: 'glob'   },
-                ]}
-              />
-            </div>
-
-            <Label>{t('panel.block.origin')}</Label>
-            <div>
-              <TextInput value={form.origin} onChange={(v) => setForm({ ...form, origin: v })} className="mono w-full" placeholder="*" />
-              <div className="text-[10.5px] mt-1" style={{ color: 'rgb(var(--fg-dim))' }}>
-                {t('panel.block.originHint')}
-              </div>
-            </div>
-
-            <Label>{t('panel.block.mode')}</Label>
-            <Segmented<BlockMode>
-              value={form.mode}
-              onChange={(v) => setForm({ ...form, mode: v })}
-              options={[
-                { id: 'block',    label: t('panel.block.blockMode'),    color: 'rgb(var(--red))' },
-                { id: 'throttle', label: t('panel.block.throttleMode'), color: 'rgb(var(--amber))' },
-              ]}
-            />
-
-            {form.mode === 'throttle' && (
-              <>
-                <Label>{t('panel.block.throttleMs')}</Label>
-                <TextInput
-                  type="number"
-                  value={String(form.throttleMs ?? DEFAULT_THROTTLE_MS)}
-                  onChange={(v) => setForm({ ...form, throttleMs: Math.max(0, Number(v) || 0) })}
-                  className="mono"
-                  style={{ width: 120 }}
-                />
-              </>
-            )}
-
-            {form.mode === 'block' && (
-              <>
-                <Label>{t('panel.block.errorCode')}</Label>
-                <TextInput
-                  type="number"
-                  value={String(form.errorCode ?? DEFAULT_BLOCK_ERROR_CODE)}
-                  onChange={(v) => setForm({ ...form, errorCode: Number(v) || 0 })}
-                  className="mono"
-                  style={{ width: 120 }}
-                />
-                <Label>{t('panel.block.errorMessage')}</Label>
-                <TextInput
-                  value={form.errorMessage ?? DEFAULT_BLOCK_ERROR_MESSAGE}
-                  onChange={(v) => setForm({ ...form, errorMessage: v })}
-                  className="mono w-full"
-                />
-              </>
-            )}
-          </div>
+          <BlockRuleForm rule={form} onChange={(patch) => setForm({ ...form, ...patch })} />
 
           <div
             className="flex gap-2 mt-4"
@@ -253,88 +187,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       style={{ fontSize: 10.5, fontWeight: 600, color: 'rgb(var(--fg-dim))', letterSpacing: 0.8 }}
     >
       {children}
-    </div>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[11.5px] pt-[7px]" style={{ color: 'rgb(var(--fg-muted))' }}>
-      {children}
-    </div>
-  );
-}
-
-function TextInput({
-  value, onChange, className = '', style, placeholder, type = 'text',
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  style?: React.CSSProperties;
-  placeholder?: string;
-  type?: 'text' | 'number';
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-      className={className}
-      style={{
-        height: 28,
-        padding: '0 10px',
-        fontSize: 12,
-        background: 'rgb(var(--surface))',
-        color: 'rgb(var(--fg))',
-        border: '1px solid rgb(var(--border))',
-        borderRadius: 6,
-        outline: 'none',
-        ...style,
-      }}
-    />
-  );
-}
-
-function Segmented<T extends string>({
-  value, onChange, options,
-}: {
-  value: T;
-  onChange: (v: T) => void;
-  options: { id: T; label: string; color?: string }[];
-}) {
-  return (
-    <div
-      className="inline-flex gap-[4px]"
-      style={{
-        padding: 2,
-        background: 'rgb(var(--surface))',
-        border: '1px solid rgb(var(--border))',
-        borderRadius: 6,
-      }}
-    >
-      {options.map(o => {
-        const active = o.id === value;
-        return (
-          <button
-            key={o.id}
-            onClick={() => onChange(o.id)}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 4,
-              fontSize: 11.5,
-              fontWeight: 500,
-              background: active ? (o.color ?? 'rgb(var(--accent))') : 'transparent',
-              color: active ? 'rgb(var(--accent-fg))' : 'rgb(var(--fg-muted))',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {o.label}
-          </button>
-        );
-      })}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Icon } from '@shared/ui/Icon';
 import { General } from './sections/General';
 import { Capture } from './sections/Capture';
 import { Mock } from './sections/Mock';
+import { Block } from './sections/Block';
 import { Advanced } from './sections/Advanced';
 import { About } from './sections/About';
 
@@ -12,6 +13,7 @@ const SECTIONS = [
   { id: 'general',  icon: 'settings' },
   { id: 'capture',  icon: 'cpu' },
   { id: 'mock',     icon: 'mock' },
+  { id: 'block',    icon: 'block' },
   { id: 'advanced', icon: 'bolt' },
   { id: 'about',    icon: 'logo' },
 ] as const;
@@ -76,6 +78,7 @@ export function App() {
         {section === 'general' && <General />}
         {section === 'capture' && <Capture />}
         {section === 'mock' && <Mock />}
+        {section === 'block' && <Block />}
         {section === 'advanced' && <Advanced />}
         {section === 'about' && <About />}
       </main>
