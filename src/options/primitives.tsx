@@ -67,8 +67,8 @@ export function MiniToggle({
       <div
         style={{
           position: 'absolute',
-          top: 1,
-          left: value ? 13 : 1,
+          top: 2,
+          left: value ? 14 : 2,
           width: 14,
           height: 14,
           borderRadius: '50%',
