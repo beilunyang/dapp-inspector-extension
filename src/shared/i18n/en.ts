@@ -164,6 +164,10 @@ export const en = {
     mockRules: {
       editTitle: 'Edit mock rule',
     },
+    rulesShared: {
+      priorityHint: 'Earlier rows match first. Drag to reorder.',
+      dragHandle: 'Drag to reorder',
+    },
     blockSec: {
       sub: 'Block or throttle RPC calls before they reach the wallet',
       newRule: 'New rule',

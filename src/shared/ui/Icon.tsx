@@ -26,6 +26,7 @@ const PATHS: Record<string, string> = {
   logo: 'M12 2l9 5v10l-9 5-9-5V7l9-5z',
   plus: 'M12 5v14M5 12h14',
   menu: 'M4 6h16M4 12h16M4 18h16',
+  grip: 'M9 5v14M15 5v14',
   sync: 'M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0113.6-5.7L20 7M20 14a8 8 0 01-13.6 5.7L4 17',
   tx: 'M3 8h13l-4-4M21 16H8l4 4',
   warn: 'M12 3L2 21h20L12 3zM12 10v5M12 17v0.5',
