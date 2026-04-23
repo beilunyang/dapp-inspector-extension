@@ -5,6 +5,7 @@ import { useT } from '@shared/stores/i18n-store';
 import { ReplayDialog } from './ReplayDialog';
 import { BlockDialog } from './BlockDialog';
 import { MockDialog } from './MockDialog';
+import { CopyMenu } from './CopyMenu';
 
 const STATUS_COLOR: Record<CallStatus | 'mocked', string> = {
   ok:      'rgb(var(--green))',
@@ -19,6 +20,7 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
   const [showReplay, setShowReplay] = useState(false);
   const [showBlock, setShowBlock] = useState(false);
   const [showMock, setShowMock] = useState(false);
+  const [showCopy, setShowCopy] = useState(false);
   return (
     <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid rgb(var(--border-soft))' }}>
       <div className="flex items-center gap-[10px] mb-[10px]">
@@ -54,9 +56,18 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
         >
           <Icon name="block" size={12} /> {t('panel.detail.block')}
         </button>
-        <button className="btn icon ghost" title="More actions" disabled>
-          <Icon name="dot3" size={12} />
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            className="btn icon ghost"
+            title={t('panel.copy.title')}
+            aria-haspopup="menu"
+            aria-expanded={showCopy}
+            onClick={() => setShowCopy(v => !v)}
+          >
+            <Icon name="dot3" size={12} />
+          </button>
+          {showCopy && <CopyMenu call={call} onClose={() => setShowCopy(false)} />}
+        </div>
       </div>
       {showReplay && (
         <ReplayDialog call={call} tabId={call.tabId} onClose={() => setShowReplay(false)} />
