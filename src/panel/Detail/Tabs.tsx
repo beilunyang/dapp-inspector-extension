@@ -111,20 +111,31 @@ function TimingView({
       </>
     );
   }
-  // Approximate waterfall — real segments aren't captured yet, synthesize a plausible breakdown.
-  const rpc = Math.max(5, Math.min(total - 5, total * 0.5));
-  const approval = call.kind === 'sign' || call.kind === 'write' ? Math.max(0, total - rpc - 8) : 0;
+  // Throttle is the one segment we actually measure — take it out of the
+  // total first, then synthesize the rest over the remainder.
+  const throttle = call.throttleMs ?? 0;
+  const organic = Math.max(0, total - throttle);
+  const rpc = Math.max(5, Math.min(organic - 5, organic * 0.5));
+  const approval = call.kind === 'sign' || call.kind === 'write' ? Math.max(0, organic - rpc - 8) : 0;
   const dapp = 2;
   const queue = 1;
-  const ret = Math.max(0, total - dapp - queue - approval - rpc);
+  const ret = Math.max(0, organic - dapp - queue - approval - rpc);
 
-  const rows = [
-    { label: t('panel.detail.timing.dapp'),     t: 0,                              w: dapp,     color: 'rgb(var(--fg-muted))' },
-    { label: t('panel.detail.timing.queue'),    t: dapp,                           w: queue,    color: 'rgb(var(--fg-dim))' },
-    { label: t('panel.detail.timing.approval'), t: dapp + queue,                   w: approval, color: 'rgb(var(--violet))' },
-    { label: t('panel.detail.timing.rpc'),      t: dapp + queue + approval,        w: rpc,      color: 'rgb(var(--accent))' },
-    { label: t('panel.detail.timing.return'),   t: dapp + queue + approval + rpc,  w: ret,      color: 'rgb(var(--fg-muted))' },
+  type Row = { label: string; t: number; w: number; color: string };
+  const rows: Row[] = [
+    { label: t('panel.detail.timing.dapp'),  t: 0,          w: dapp,  color: 'rgb(var(--fg-muted))' },
+    { label: t('panel.detail.timing.queue'), t: dapp,       w: queue, color: 'rgb(var(--fg-dim))' },
   ];
+  let cursor = dapp + queue;
+  if (throttle > 0) {
+    rows.push({ label: t('panel.detail.timing.throttle'), t: cursor, w: throttle, color: 'rgb(var(--amber))' });
+    cursor += throttle;
+  }
+  rows.push(
+    { label: t('panel.detail.timing.approval'), t: cursor,                     w: approval, color: 'rgb(var(--violet))' },
+    { label: t('panel.detail.timing.rpc'),      t: cursor + approval,          w: rpc,      color: 'rgb(var(--accent))' },
+    { label: t('panel.detail.timing.return'),   t: cursor + approval + rpc,    w: ret,      color: 'rgb(var(--fg-muted))' },
+  );
 
   return (
     <>

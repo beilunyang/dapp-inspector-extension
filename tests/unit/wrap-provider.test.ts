@@ -48,6 +48,23 @@ describe('wrapProvider', () => {
     expect(typeof providerCall?.[0].origin).toBe('string');
   });
 
+  it('records the applied throttle delay on call:end', async () => {
+    const provider = { request: vi.fn().mockResolvedValue('ok') };
+    const preRequest = vi.fn().mockResolvedValue({ kind: 'delay', ms: 5 });
+    wrapProvider(provider as any, info, emit, preRequest);
+    await provider.request({ method: 'eth_call', params: [] });
+    const endMsg = emit.mock.calls.map(c => c[0]).find(m => m.kind === 'call:end');
+    expect(endMsg?.payload.throttleMs).toBe(5);
+  });
+
+  it('omits throttleMs when no delay was applied', async () => {
+    const provider = { request: vi.fn().mockResolvedValue('ok') };
+    wrapProvider(provider as any, info, emit);
+    await provider.request({ method: 'eth_call', params: [] });
+    const endMsg = emit.mock.calls.map(c => c[0]).find(m => m.kind === 'call:end');
+    expect(endMsg?.payload.throttleMs).toBeUndefined();
+  });
+
   it('tags the next call:start with replayed after markNextRequestAsReplay', async () => {
     const provider = { request: vi.fn().mockResolvedValue('ok') };
     wrapProvider(provider as any, info, emit);

@@ -95,6 +95,7 @@ export const zh: I18nDict = {
       timing: {
         dapp: 'DApp 发送',
         queue: '扩展排队',
+        throttle: '限速规则延迟',
         approval: '钱包授权',
         rpc: 'RPC 往返',
         return: '返回给 DApp',

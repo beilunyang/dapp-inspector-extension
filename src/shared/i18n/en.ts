@@ -93,6 +93,7 @@ export const en = {
       timing: {
         dapp: 'DApp dispatch',
         queue: 'Queued in extension',
+        throttle: 'Throttle rule delay',
         approval: 'Wallet approval',
         rpc: 'RPC roundtrip',
         return: 'Return to DApp',

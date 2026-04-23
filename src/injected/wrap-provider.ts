@@ -81,6 +81,7 @@ export function wrapProvider(
     void classify; // referenced to avoid unused import under some tsconfigs
 
     // Apply pre-request rules (block / throttle) before hitting the real provider.
+    let throttleMs = 0;
     if (preRequest) {
       let action: PreRequestAction = { kind: 'pass' };
       try {
@@ -104,9 +105,11 @@ export function wrapProvider(
         throw err;
       }
       if (action.kind === 'delay' && action.ms > 0) {
+        throttleMs = action.ms;
         await new Promise<void>(r => setTimeout(r, action.ms));
       }
     }
+    const throttleTag = throttleMs > 0 ? { throttleMs } : {};
 
     // Mock-request hook runs AFTER pre-request (so throttle delay applies
     // first). On match, short-circuit the real provider and emit a synthetic
@@ -134,6 +137,7 @@ export function wrapProvider(
               durationMs: performance.now() - startPerf,
               result: safeClone(mockAction.result),
               mocked: true,
+              ...throttleTag,
             },
           });
         } catch {}
@@ -152,6 +156,7 @@ export function wrapProvider(
               durationMs: performance.now() - startPerf,
               error: mockAction.error,
               mocked: true,
+              ...throttleTag,
             },
           });
         } catch {}
@@ -169,7 +174,7 @@ export function wrapProvider(
       try {
         emit({
           source: 'dappinsp', kind: 'call:end',
-          payload: { id, endedAt, durationMs: performance.now() - startPerf, result: safeClone(result) },
+          payload: { id, endedAt, durationMs: performance.now() - startPerf, result: safeClone(result), ...throttleTag },
         });
       } catch {}
       return result;
@@ -178,7 +183,7 @@ export function wrapProvider(
       try {
         emit({
           source: 'dappinsp', kind: 'call:error',
-          payload: { id, endedAt, durationMs: performance.now() - startPerf, error: serializeError(error) },
+          payload: { id, endedAt, durationMs: performance.now() - startPerf, error: serializeError(error), ...throttleTag },
         });
       } catch {}
       throw error;
