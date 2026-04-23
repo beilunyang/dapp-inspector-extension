@@ -1,10 +1,12 @@
-import { useT } from '@shared/stores/i18n-store';
+import { useT, useLang } from '@shared/stores/i18n-store';
 import { Mascot } from '@shared/ui/Mascot';
 import { Icon } from '@shared/ui/Icon';
+import { CHANGELOG } from '@shared/changelog';
 import { SectionTitle } from '../primitives';
 
 export function About() {
   const t = useT();
+  const lang = useLang();
   const version = chrome.runtime.getManifest().version;
   return (
     <div>
@@ -59,9 +61,15 @@ export function About() {
 
       <SectionTitle>{t('options.about.changelog')}</SectionTitle>
       <ul className="space-y-2 text-[12px]" style={{ color: 'rgb(var(--fg-muted))' }}>
-        <li>
-          <b className="mono" style={{ color: 'rgb(var(--fg))' }}>0.1.0</b> — Initial P0 release: DevTools panel, Popup, Options.
-        </li>
+        {CHANGELOG.map(entry => (
+          <li key={entry.version}>
+            <b className="mono" style={{ color: 'rgb(var(--fg))' }}>{entry.version}</b>
+            <span className="mono ml-2" style={{ color: 'rgb(var(--fg-dim))', fontSize: 10.5 }}>
+              {entry.date}
+            </span>
+            <span className="ml-2">— {lang === 'zh' ? entry.zh : entry.en}</span>
+          </li>
+        ))}
       </ul>
     </div>
   );
