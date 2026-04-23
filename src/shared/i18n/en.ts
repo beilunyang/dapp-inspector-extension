@@ -145,8 +145,6 @@ export const en = {
       accentHint: 'Used for selections, highlights, and the mascot gradient.',
       monByDefault: 'Monitor by default',
       monByDefaultDesc: 'Start recording as soon as a DApp tab opens.',
-      badge: 'Toolbar badge',
-      badgeDesc: 'Show an unread-call count on the extension icon.',
       shortcut: 'Open panel shortcut',
       shortcutDesc: 'Global keyboard shortcut to jump into the inspector.',
       lang: 'Language',

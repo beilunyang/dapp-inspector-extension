@@ -110,12 +110,6 @@ export function General() {
       />
 
       <Row
-        title={t('options.general.badge')}
-        desc={t('options.general.badgeDesc')}
-        control={<MiniToggle value={true} />}
-      />
-
-      <Row
         title={t('options.general.shortcut')}
         desc={t('options.general.shortcutDesc')}
         control={
