@@ -27,6 +27,9 @@ export function MethodList() {
   const kinds = useViewStore(s => s.kinds);
   const errorsOnly = useViewStore(s => s.errorsOnly);
   const mockedOnly = useViewStore(s => s.mockedOnly);
+  const blockedOnly = useViewStore(s => s.blockedOnly);
+  const throttledOnly = useViewStore(s => s.throttledOnly);
+  const replayedOnly = useViewStore(s => s.replayedOnly);
   const selectedId = useViewStore(s => s.selectedCallId);
   const select = useViewStore(s => s.select);
 
@@ -36,10 +39,13 @@ export function MethodList() {
       if (kinds.size > 0 && !kinds.has(c.kind)) return false;
       if (errorsOnly && c.status !== 'error') return false;
       if (mockedOnly && !c.mocked) return false;
+      if (blockedOnly && !c.blocked) return false;
+      if (throttledOnly && !((c.throttleMs ?? 0) > 0)) return false;
+      if (replayedOnly && !c.replayed) return false;
       if (!q) return true;
       return c.method.toLowerCase().includes(q) || c.origin.toLowerCase().includes(q);
     });
-  }, [calls, search, kinds, errorsOnly, mockedOnly]);
+  }, [calls, search, kinds, errorsOnly, mockedOnly, blockedOnly, throttledOnly, replayedOnly]);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const virt = useVirtualizer({

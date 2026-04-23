@@ -11,6 +11,9 @@ interface ViewState {
   origins: Set<string>;
   errorsOnly: boolean;
   mockedOnly: boolean;
+  blockedOnly: boolean;
+  throttledOnly: boolean;
+  replayedOnly: boolean;
   select(id: string | null): void;
   setTab(t: Tab): void;
   setSearch(s: string): void;
@@ -18,6 +21,9 @@ interface ViewState {
   toggleOrigin(o: string): void;
   toggleErrorsOnly(): void;
   toggleMockedOnly(): void;
+  toggleBlockedOnly(): void;
+  toggleThrottledOnly(): void;
+  toggleReplayedOnly(): void;
   resetChips(): void;
   clearFilters(): void;
 }
@@ -30,6 +36,9 @@ export const useViewStore = create<ViewState>((set) => ({
   origins: new Set(),
   errorsOnly: false,
   mockedOnly: false,
+  blockedOnly: false,
+  throttledOnly: false,
+  replayedOnly: false,
   select(id) { set({ selectedCallId: id }); },
   setTab(t) { set({ activeTab: t }); },
   setSearch(s) { set({ search: s }); },
@@ -37,6 +46,9 @@ export const useViewStore = create<ViewState>((set) => ({
   toggleOrigin(o) { set((s) => { const n = new Set(s.origins); n.has(o) ? n.delete(o) : n.add(o); return { origins: n }; }); },
   toggleErrorsOnly() { set((s) => ({ errorsOnly: !s.errorsOnly })); },
   toggleMockedOnly() { set((s) => ({ mockedOnly: !s.mockedOnly })); },
-  resetChips() { set({ kinds: new Set(), errorsOnly: false, mockedOnly: false }); },
-  clearFilters() { set({ kinds: new Set(), origins: new Set(), search: '', errorsOnly: false, mockedOnly: false }); },
+  toggleBlockedOnly() { set((s) => ({ blockedOnly: !s.blockedOnly })); },
+  toggleThrottledOnly() { set((s) => ({ throttledOnly: !s.throttledOnly })); },
+  toggleReplayedOnly() { set((s) => ({ replayedOnly: !s.replayedOnly })); },
+  resetChips() { set({ kinds: new Set(), errorsOnly: false, mockedOnly: false, blockedOnly: false, throttledOnly: false, replayedOnly: false }); },
+  clearFilters() { set({ kinds: new Set(), origins: new Set(), search: '', errorsOnly: false, mockedOnly: false, blockedOnly: false, throttledOnly: false, replayedOnly: false }); },
 }));

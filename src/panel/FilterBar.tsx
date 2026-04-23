@@ -6,7 +6,7 @@ import { Icon } from '@shared/ui/Icon';
 import type { Kind } from '@shared/types';
 
 interface ChipDef {
-  id: Kind | 'all' | 'errors' | 'mocked';
+  id: Kind | 'all' | 'errors' | 'mocked' | 'blocked' | 'throttled' | 'replayed';
   labelKey: string;
   color?: string;
 }
@@ -19,6 +19,9 @@ const CHIPS: ChipDef[] = [
   { id: 'subscribe', labelKey: 'panel.filters.subscribe', color: 'rgb(var(--accent))' },
   { id: 'errors', labelKey: 'panel.filters.errors', color: 'rgb(var(--red))' },
   { id: 'mocked', labelKey: 'panel.filters.mocked', color: 'rgb(var(--violet))' },
+  { id: 'blocked', labelKey: 'panel.filters.blocked', color: 'rgb(var(--amber))' },
+  { id: 'throttled', labelKey: 'panel.filters.throttled', color: 'rgb(var(--amber))' },
+  { id: 'replayed', labelKey: 'panel.filters.replayed', color: 'rgb(var(--accent))' },
 ];
 
 export function FilterBar() {
@@ -29,21 +32,30 @@ export function FilterBar() {
   const toggleKind = useViewStore(s => s.toggleKind);
   const errorsOnly = useViewStore(s => s.errorsOnly);
   const mockedOnly = useViewStore(s => s.mockedOnly);
+  const blockedOnly = useViewStore(s => s.blockedOnly);
+  const throttledOnly = useViewStore(s => s.throttledOnly);
+  const replayedOnly = useViewStore(s => s.replayedOnly);
   const toggleErrorsOnly = useViewStore(s => s.toggleErrorsOnly);
   const toggleMockedOnly = useViewStore(s => s.toggleMockedOnly);
+  const toggleBlockedOnly = useViewStore(s => s.toggleBlockedOnly);
+  const toggleThrottledOnly = useViewStore(s => s.toggleThrottledOnly);
+  const toggleReplayedOnly = useViewStore(s => s.toggleReplayedOnly);
   const resetChips = useViewStore(s => s.resetChips);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: calls.length, read: 0, write: 0, sign: 0, subscribe: 0, errors: 0, mocked: 0 };
+    const c: Record<string, number> = { all: calls.length, read: 0, write: 0, sign: 0, subscribe: 0, errors: 0, mocked: 0, blocked: 0, throttled: 0, replayed: 0 };
     for (const call of calls) {
       c[call.kind] = (c[call.kind] ?? 0) + 1;
       if (call.status === 'error') c.errors++;
       if (call.mocked) c.mocked++;
+      if (call.blocked) c.blocked++;
+      if ((call.throttleMs ?? 0) > 0) c.throttled++;
+      if (call.replayed) c.replayed++;
     }
     return c;
   }, [calls]);
 
-  const allActive = kinds.size === 0 && !errorsOnly && !mockedOnly;
+  const allActive = kinds.size === 0 && !errorsOnly && !mockedOnly && !blockedOnly && !throttledOnly && !replayedOnly;
 
   return (
     <div
@@ -55,6 +67,9 @@ export function FilterBar() {
           c.id === 'all' ? allActive :
           c.id === 'errors' ? errorsOnly :
           c.id === 'mocked' ? mockedOnly :
+          c.id === 'blocked' ? blockedOnly :
+          c.id === 'throttled' ? throttledOnly :
+          c.id === 'replayed' ? replayedOnly :
           kinds.has(c.id as Kind);
         return (
           <button
@@ -63,6 +78,9 @@ export function FilterBar() {
               if (c.id === 'all') resetChips();
               else if (c.id === 'errors') toggleErrorsOnly();
               else if (c.id === 'mocked') toggleMockedOnly();
+              else if (c.id === 'blocked') toggleBlockedOnly();
+              else if (c.id === 'throttled') toggleThrottledOnly();
+              else if (c.id === 'replayed') toggleReplayedOnly();
               else toggleKind(c.id as Kind);
             }}
             className="inline-flex items-center gap-[6px] cursor-pointer"

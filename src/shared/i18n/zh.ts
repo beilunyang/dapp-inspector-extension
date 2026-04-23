@@ -14,7 +14,7 @@ export const zh: I18nDict = {
     },
     filters: {
       all: '全部', read: '读取', write: '写入', sign: '签名', subscribe: '订阅',
-      errors: '错误', mocked: '模拟',
+      errors: '错误', mocked: '模拟', blocked: '拦截', throttled: '限速', replayed: '重放',
     },
     list: { method: '方法', origin: '来源', status: '状态', duration: '耗时', ts: '时间', throttleHint: '命中限速规则 — 注入延迟 {n} 毫秒' },
     copy: {
