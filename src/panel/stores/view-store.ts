@@ -8,7 +8,6 @@ interface ViewState {
   activeTab: Tab;
   search: string;
   kinds: Set<Kind>;
-  origins: Set<string>;
   errorsOnly: boolean;
   mockedOnly: boolean;
   blockedOnly: boolean;
@@ -18,7 +17,6 @@ interface ViewState {
   setTab(t: Tab): void;
   setSearch(s: string): void;
   toggleKind(k: Kind): void;
-  toggleOrigin(o: string): void;
   toggleErrorsOnly(): void;
   toggleMockedOnly(): void;
   toggleBlockedOnly(): void;
@@ -33,7 +31,6 @@ export const useViewStore = create<ViewState>((set) => ({
   activeTab: 'params',
   search: '',
   kinds: new Set(),
-  origins: new Set(),
   errorsOnly: false,
   mockedOnly: false,
   blockedOnly: false,
@@ -43,12 +40,11 @@ export const useViewStore = create<ViewState>((set) => ({
   setTab(t) { set({ activeTab: t }); },
   setSearch(s) { set({ search: s }); },
   toggleKind(k) { set((s) => { const n = new Set(s.kinds); n.has(k) ? n.delete(k) : n.add(k); return { kinds: n }; }); },
-  toggleOrigin(o) { set((s) => { const n = new Set(s.origins); n.has(o) ? n.delete(o) : n.add(o); return { origins: n }; }); },
   toggleErrorsOnly() { set((s) => ({ errorsOnly: !s.errorsOnly })); },
   toggleMockedOnly() { set((s) => ({ mockedOnly: !s.mockedOnly })); },
   toggleBlockedOnly() { set((s) => ({ blockedOnly: !s.blockedOnly })); },
   toggleThrottledOnly() { set((s) => ({ throttledOnly: !s.throttledOnly })); },
   toggleReplayedOnly() { set((s) => ({ replayedOnly: !s.replayedOnly })); },
   resetChips() { set({ kinds: new Set(), errorsOnly: false, mockedOnly: false, blockedOnly: false, throttledOnly: false, replayedOnly: false }); },
-  clearFilters() { set({ kinds: new Set(), origins: new Set(), search: '', errorsOnly: false, mockedOnly: false, blockedOnly: false, throttledOnly: false, replayedOnly: false }); },
+  clearFilters() { set({ kinds: new Set(), search: '', errorsOnly: false, mockedOnly: false, blockedOnly: false, throttledOnly: false, replayedOnly: false }); },
 }));

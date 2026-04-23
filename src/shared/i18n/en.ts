@@ -2,13 +2,12 @@ export const en = {
   panel: {
     count: '{n} calls',
     toolbar: {
-      search: 'Filter by method or origin',
+      search: 'Filter by method',
       clear: 'Clear',
       settings: 'Settings',
       monitoring: 'Monitoring',
       record: 'Record',
       pause: 'Pause',
-      filter: { kind: 'Kind', origin: 'Origin', chain: 'Chain' },
     },
     filters: {
       all: 'All', read: 'Read', write: 'Write', sign: 'Sign', subscribe: 'Subscribe',

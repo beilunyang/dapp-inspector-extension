@@ -43,7 +43,7 @@ export function MethodList() {
       if (throttledOnly && !((c.throttleMs ?? 0) > 0)) return false;
       if (replayedOnly && !c.replayed) return false;
       if (!q) return true;
-      return c.method.toLowerCase().includes(q) || c.origin.toLowerCase().includes(q);
+      return c.method.toLowerCase().includes(q);
     });
   }, [calls, search, kinds, errorsOnly, mockedOnly, blockedOnly, throttledOnly, replayedOnly]);
 
