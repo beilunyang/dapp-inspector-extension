@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
 
     const tabId = sender.tab?.id;
     const url = sender.tab?.url ?? '';
-    const origin = url ? new URL(url).origin : '';
+    const tabUrlOrigin = safeOrigin(url);
     if (!tabId || (msg as PageMsg)?.source !== 'dappinsp') return;
 
     const [store, tracker] = await Promise.all([storeReady, trackerReady]);
@@ -57,10 +57,17 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
     // call:start append (which also awaits tracker.onCallStart), leaving
     // the row stuck at "pending" until the next snapshot refresh.
 
+    // Prefer the page-reported origin (window.location.origin from the
+    // injected script). sender.tab.url can lag during navigation — at
+    // document_start it may still be "chrome://newtab/" even though the
+    // page has committed to a real DApp URL — so we only use it as a
+    // fallback for events that don't carry origin themselves.
     if (pageMsg.kind === 'provider') {
+      const origin = pageMsg.origin || tabUrlOrigin;
       const prov = await tracker.onProvider(tabId, pageMsg.payload, origin, url);
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
     } else if (pageMsg.kind === 'call:start') {
+      const origin = pageMsg.payload.origin || tabUrlOrigin;
       const call: CapturedCall = {
         id: pageMsg.payload.id, tabId, origin,
         providerInfo: pageMsg.payload.providerInfo,
@@ -82,7 +89,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       const updated = await store.patch(pageMsg.payload.id, patch);
       if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
-        await tracker.onProvider(tabId, updated.providerInfo, origin, url);
+        await tracker.onProvider(tabId, updated.providerInfo, updated.origin || tabUrlOrigin, url);
       }
       await ports.pushPopup(settings.monitoring);
     } else if (pageMsg.kind === 'call:error') {
@@ -133,3 +140,8 @@ chrome.alarms?.onAlarm.addListener((alarm) => {
 chrome.runtime.onInstalled.addListener((d) => {
   if (d.reason === 'install') chrome.runtime.openOptionsPage();
 });
+
+function safeOrigin(url: string): string {
+  if (!url) return '';
+  try { return new URL(url).origin; } catch { return ''; }
+}
