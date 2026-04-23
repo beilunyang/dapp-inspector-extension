@@ -11,7 +11,7 @@ export const en = {
       filter: { kind: 'Kind', origin: 'Origin', chain: 'Chain' },
     },
     filters: {
-      all: 'All', read: 'Read', write: 'Write', sign: 'Sign',
+      all: 'All', read: 'Read', write: 'Write', sign: 'Sign', subscribe: 'Subscribe',
       errors: 'Errors', mocked: 'Mocked',
     },
     list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When', throttleHint: 'Matched by a Throttle rule — delay: {n}ms' },
