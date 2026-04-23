@@ -194,8 +194,6 @@ export const zh: I18nDict = {
     },
     advanced: {
       sub: '面向开发者的选项',
-      devLogs: '冗余日志',
-      devLogsDesc: '将注入 / 内容脚本事件打印到控制台。',
       diagnostics: '诊断信息',
       version: '版本',
       engine: '引擎',
