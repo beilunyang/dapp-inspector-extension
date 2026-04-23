@@ -14,6 +14,7 @@ export function App() {
   const t = useT();
   const [tabId, setTabId] = useState<number | null>(null);
   const [tabUrl, setTabUrl] = useState<string>('');
+  const [tabFavIcon, setTabFavIcon] = useState<string>('');
   const apply = usePopupStore(s => s.apply);
   const provenance = usePopupStore(s => s.provenance);
   const recent = usePopupStore(s => s.recent);
@@ -27,6 +28,7 @@ export function App() {
       if (tab?.id != null) {
         setTabId(tab.id);
         setTabUrl(tab.url ?? '');
+        setTabFavIcon(tab.favIconUrl ?? '');
         send({ kind: 'subscribe', tabId: tab.id });
       }
     });
@@ -87,6 +89,7 @@ export function App() {
         <SectionTitle>{t('popup.currentTab')}</SectionTitle>
         <TabCard
           url={effectiveUrl}
+          favIcon={tabFavIcon}
           detected={detected}
           inspectable={inspectable}
           wallet={provenance?.wallets?.[0]?.name ?? '—'}
@@ -181,9 +184,10 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 }
 
 function TabCard({
-  url, detected, inspectable, wallet, chainId,
+  url, favIcon, detected, inspectable, wallet, chainId,
 }: {
   url: string;
+  favIcon: string;
   detected: boolean;
   inspectable: boolean;
   wallet: string;
@@ -197,6 +201,10 @@ function TabCard({
       ? t('popup.detected')
       : t('popup.notDetected');
   const dotColor = detected ? 'rgb(var(--green))' : 'rgb(var(--fg-dim))';
+  const [favIconBroken, setFavIconBroken] = useState(false);
+  const showFavIcon = inspectable && !!favIcon && !favIconBroken;
+  // Reset broken flag when the URL / icon changes.
+  useEffect(() => { setFavIconBroken(false); }, [favIcon]);
   return (
     <div
       className="p-3"
@@ -208,14 +216,27 @@ function TabCard({
     >
       <div className="flex items-center gap-2 mb-[10px]">
         <div style={{
-          width: 20, height: 20, borderRadius: 4, flexShrink: 0,
-          background: detected
-            ? 'linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-2)))'
-            : 'rgb(var(--surface-2))',
+          width: 20, height: 20, borderRadius: 4, flexShrink: 0, overflow: 'hidden',
+          background: showFavIcon
+            ? 'rgb(var(--surface-2))'
+            : detected
+              ? 'linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-2)))'
+              : 'rgb(var(--surface-2))',
           color: 'rgb(var(--fg-dim))',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {!detected && <Icon name="globe" size={12} />}
+          {showFavIcon ? (
+            <img
+              src={favIcon}
+              alt=""
+              width={16}
+              height={16}
+              style={{ display: 'block' }}
+              onError={() => setFavIconBroken(true)}
+            />
+          ) : !detected ? (
+            <Icon name="globe" size={12} />
+          ) : null}
         </div>
         <div className="flex-1 min-w-0">
           <div className="mono text-[12px] font-medium truncate">{host || t('popup.noPage')}</div>
