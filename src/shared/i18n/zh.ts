@@ -128,7 +128,7 @@ export const zh: I18nDict = {
   },
   options: {
     title: '设置',
-    nav: { general: '常规', capture: '抓取', mock: '模拟', advanced: '高级', about: '关于' },
+    nav: { general: '常规', capture: '抓取', mock: '模拟', block: '阻断', advanced: '高级', about: '关于' },
     general: {
       sub: '外观、语言与快捷键',
       theme: '主题',
@@ -165,6 +165,19 @@ export const zh: I18nDict = {
     },
     mockRules: {
       editTitle: '编辑 Mock 规则',
+    },
+    blockSec: {
+      sub: '在 RPC 调用到达钱包之前阻断或限速',
+      newRule: '新建规则',
+      activeCount: '{active} / {total} 条启用',
+      empty: '暂无阻断/限速规则。在这里新建一条,或在详情面板点 Block 按钮。',
+      columnMethod: '方法',
+      columnOrigin: '来源',
+      columnMode: '模式',
+      columnValue: '参数',
+    },
+    blockRules: {
+      editTitle: '编辑阻断规则',
     },
     advanced: {
       sub: '面向开发者的选项',
