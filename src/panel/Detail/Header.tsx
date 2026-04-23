@@ -58,13 +58,14 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
         </button>
         <div style={{ position: 'relative' }}>
           <button
-            className="btn icon ghost"
+            className="btn ghost"
+            style={{ fontSize: 12 }}
             title={t('panel.copy.title')}
             aria-haspopup="menu"
             aria-expanded={showCopy}
             onClick={() => setShowCopy(v => !v)}
           >
-            <Icon name="dot3" size={12} />
+            <Icon name="copy" size={12} /> {t('panel.copy.button')}
           </button>
           {showCopy && <CopyMenu call={call} onClose={() => setShowCopy(false)} />}
         </div>

@@ -19,6 +19,7 @@ export const zh: I18nDict = {
     },
     list: { method: '方法', origin: '来源', status: '状态', duration: '耗时', ts: '时间' },
     copy: {
+      button: '复制',
       title: '复制为',
       jsonRpc: 'JSON-RPC envelope',
       jsonRpcHint: '粘贴到 RPC 控制台或 Issue',

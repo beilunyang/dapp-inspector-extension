@@ -17,6 +17,7 @@ export const en = {
     },
     list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When' },
     copy: {
+      button: 'Copy',
       title: 'Copy as',
       jsonRpc: 'JSON-RPC envelope',
       jsonRpcHint: 'Paste into an RPC console or issue',
