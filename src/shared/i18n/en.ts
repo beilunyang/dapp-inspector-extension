@@ -12,7 +12,7 @@ export const en = {
     },
     filters: {
       all: 'All', read: 'Read', write: 'Write', sign: 'Sign', subscribe: 'Subscribe',
-      errors: 'Errors', mocked: 'Mocked',
+      errors: 'Errors', mocked: 'Mocked', blocked: 'Blocked', throttled: 'Throttled', replayed: 'Replayed',
     },
     list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When', throttleHint: 'Matched by a Throttle rule — delay: {n}ms' },
     copy: {
