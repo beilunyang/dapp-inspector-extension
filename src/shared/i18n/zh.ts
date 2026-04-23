@@ -55,6 +55,8 @@ export const zh: I18nDict = {
     openPanel: '打开 DevTools 面板',
     currentTab: '当前标签页',
     detected: '检测到 DApp',
+    notDetected: '尚未检测到 DApp 调用',
+    noPage: '无活动页面',
     provider: 'Provider',
     chain: '链',
     last: '最近',

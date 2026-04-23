@@ -12,10 +12,11 @@ import { classify } from '@shared/classify';
 
 const storeReady: Promise<BgStore> = createStore();
 const trackerReady = storeReady.then(createTabTracker);
-const ports = createPortHub(storeReady);
 
 let settings: Settings = DEFAULT_SETTINGS;
 void loadSettings().then((s) => { settings = s; });
+
+const ports = createPortHub(storeReady, () => settings.monitoring);
 
 chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
   void (async () => {
@@ -31,14 +32,15 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
     }
 
     const tabId = sender.tab?.id;
-    const origin = sender.tab?.url ? new URL(sender.tab.url).origin : '';
+    const url = sender.tab?.url ?? '';
+    const origin = url ? new URL(url).origin : '';
     if (!tabId || (msg as PageMsg)?.source !== 'dappinsp') return;
 
     const [store, tracker] = await Promise.all([storeReady, trackerReady]);
     const pageMsg = msg as PageMsg;
 
     if (pageMsg.kind === 'provider') {
-      const prov = await tracker.onProvider(tabId, pageMsg.payload, origin);
+      const prov = await tracker.onProvider(tabId, pageMsg.payload, origin, url);
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
     } else if (pageMsg.kind === 'call:start') {
       const call: CapturedCall = {
@@ -49,7 +51,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
         status: 'pending',
       };
       await store.append(call);
-      const prov = await tracker.onCallStart(tabId, call);
+      const prov = await tracker.onCallStart(tabId, call, url);
       ports.pushPanel(tabId, { kind: 'append', call });
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
       await ports.pushPopup(settings.monitoring);
@@ -60,7 +62,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       };
       const updated = await store.patch(pageMsg.payload.id, patch);
       if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
-        await tracker.onProvider(tabId, updated.providerInfo, origin);
+        await tracker.onProvider(tabId, updated.providerInfo, origin, url);
       }
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await ports.pushPopup(settings.monitoring);

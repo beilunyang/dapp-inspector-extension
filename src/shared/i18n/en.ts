@@ -53,6 +53,8 @@ export const en = {
     openPanel: 'Open DevTools panel',
     currentTab: 'Current tab',
     detected: 'DApp detected',
+    notDetected: 'No DApp activity yet',
+    noPage: 'No active page',
     provider: 'Provider',
     chain: 'Chain',
     last: 'Last',

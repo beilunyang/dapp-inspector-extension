@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useBackgroundPort } from '@shared/ui/useBackgroundPort';
 import type { PopupPush, PopupReq } from '@shared/messages';
-import type { CapturedCall, TabProvenance } from '@shared/types';
+import type { CapturedCall } from '@shared/types';
 import { usePopupStore } from './stores/popup-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { useT } from '@shared/stores/i18n-store';
@@ -13,6 +13,7 @@ const APP_VERSION = chrome.runtime?.getManifest?.()?.version ?? '0.1.0';
 export function App() {
   const t = useT();
   const [tabId, setTabId] = useState<number | null>(null);
+  const [tabUrl, setTabUrl] = useState<string>('');
   const apply = usePopupStore(s => s.apply);
   const provenance = usePopupStore(s => s.provenance);
   const recent = usePopupStore(s => s.recent);
@@ -23,12 +24,19 @@ export function App() {
 
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-      if (tab?.id != null) { setTabId(tab.id); send({ kind: 'subscribe', tabId: tab.id }); }
+      if (tab?.id != null) {
+        setTabId(tab.id);
+        setTabUrl(tab.url ?? '');
+        send({ kind: 'subscribe', tabId: tab.id });
+      }
     });
   }, [send]);
 
   const detected = !!provenance?.hasDapp;
+  const inspectable = isInspectable(tabUrl);
   const mood: 'happy' | 'neutral' | 'warn' = monitoring ? (detected ? 'happy' : 'neutral') : 'warn';
+  // Prefer the live tab URL; fall back to what the background recorded.
+  const effectiveUrl = tabUrl || provenance?.url || provenance?.origin || '';
 
   return (
     <div
@@ -77,10 +85,13 @@ export function App() {
       {/* Current tab status */}
       <div className="px-[14px] pt-[14px]">
         <SectionTitle>{t('popup.currentTab')}</SectionTitle>
-        {detected && provenance
-          ? <TabDetected prov={provenance} />
-          : <TabNoDapp label={t('popup.variants.noDapp.heading')} hint={t('popup.variants.noDapp.hint')} />
-        }
+        <TabCard
+          url={effectiveUrl}
+          detected={detected}
+          inspectable={inspectable}
+          wallet={provenance?.wallets?.[0]?.name ?? '—'}
+          chainId={provenance?.chainId ?? '—'}
+        />
       </div>
 
       {/* Recent activity */}
@@ -169,38 +180,63 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
-function TabDetected({ prov }: { prov: TabProvenance }) {
+function TabCard({
+  url, detected, inspectable, wallet, chainId,
+}: {
+  url: string;
+  detected: boolean;
+  inspectable: boolean;
+  wallet: string;
+  chainId: string;
+}) {
   const t = useT();
-  const wallet = prov.wallets[0];
-  const host = safeHost(prov.origin || prov.url);
+  const host = safeHost(url);
+  const subtitle = !inspectable
+    ? t('popup.variants.noDapp.hint')
+    : detected
+      ? t('popup.detected')
+      : t('popup.notDetected');
+  const dotColor = detected ? 'rgb(var(--green))' : 'rgb(var(--fg-dim))';
   return (
     <div
       className="p-3"
-      style={{ borderRadius: 8, background: 'rgb(var(--surface))', border: '1px solid rgb(var(--border-soft))' }}
+      style={{
+        borderRadius: 8,
+        background: 'rgb(var(--surface))',
+        border: detected ? '1px solid rgb(var(--border-soft))' : '1px dashed rgb(var(--border))',
+      }}
     >
       <div className="flex items-center gap-2 mb-[10px]">
         <div style={{
           width: 20, height: 20, borderRadius: 4, flexShrink: 0,
-          background: 'linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-2)))',
-        }} />
-        <div className="flex-1 min-w-0">
-          <div className="mono text-[12px] font-medium truncate">{host || '—'}</div>
-          <div className="text-[10.5px]" style={{ color: 'rgb(var(--fg-muted))' }}>{t('popup.detected')}</div>
+          background: detected
+            ? 'linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-2)))'
+            : 'rgb(var(--surface-2))',
+          color: 'rgb(var(--fg-dim))',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {!detected && <Icon name="globe" size={12} />}
         </div>
-        <span className="dot" style={{ color: 'rgb(var(--green))' }} />
+        <div className="flex-1 min-w-0">
+          <div className="mono text-[12px] font-medium truncate">{host || t('popup.noPage')}</div>
+          <div className="text-[10.5px]" style={{ color: 'rgb(var(--fg-muted))' }}>{subtitle}</div>
+        </div>
+        <span className="dot" style={{ color: dotColor }} />
       </div>
       <div
         className="grid gap-2 pt-[10px]"
         style={{ gridTemplateColumns: '1fr 1fr', borderTop: '1px solid rgb(var(--border-soft))' }}
       >
-        <StatCell icon="wallet" label={t('popup.provider')} value={wallet?.name ?? '—'} />
-        <StatCell icon="cpu" label={t('popup.chain')} value={prov.chainId ?? '—'} />
+        <StatCell icon="wallet" label={t('popup.provider')} value={wallet} muted={!detected} />
+        <StatCell icon="cpu" label={t('popup.chain')} value={chainId} muted={!detected} />
       </div>
     </div>
   );
 }
 
-function StatCell({ icon, label, value }: { icon: string; label: string; value: string }) {
+function StatCell({ icon, label, value, muted }: {
+  icon: string; label: string; value: string; muted?: boolean;
+}) {
   return (
     <div>
       <div
@@ -209,29 +245,19 @@ function StatCell({ icon, label, value }: { icon: string; label: string; value: 
       >
         <Icon name={icon} size={10} /> {label}
       </div>
-      <div className="mono truncate text-[11.5px]" style={{ color: 'rgb(var(--fg))' }}>
+      <div
+        className="mono truncate text-[11.5px]"
+        style={{ color: muted ? 'rgb(var(--fg-dim))' : 'rgb(var(--fg))' }}
+      >
         {value}
       </div>
     </div>
   );
 }
 
-function TabNoDapp({ label, hint }: { label: string; hint: string }) {
-  return (
-    <div
-      className="p-[14px] text-center"
-      style={{ borderRadius: 8, background: 'rgb(var(--surface))', border: '1px dashed rgb(var(--border))' }}
-    >
-      <div
-        className="inline-flex items-center justify-center mb-2"
-        style={{ width: 32, height: 32, borderRadius: 8, background: 'rgb(var(--surface-2))', color: 'rgb(var(--fg-dim))' }}
-      >
-        <Icon name="globe" size={15} />
-      </div>
-      <div className="text-[12.5px] font-medium mb-[2px]">{label}</div>
-      <div className="text-[11px]" style={{ color: 'rgb(var(--fg-muted))' }}>{hint}</div>
-    </div>
-  );
+function isInspectable(url: string): boolean {
+  if (!url) return false;
+  return url.startsWith('http://') || url.startsWith('https://');
 }
 
 function SparkLine({ calls }: { calls: CapturedCall[] }) {
