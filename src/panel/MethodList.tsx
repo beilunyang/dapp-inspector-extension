@@ -132,7 +132,7 @@ function Row({ call, selected, onClick, offset, t }: {
     >
       <span
         className="inline-flex items-center justify-center"
-        style={{ width: 8, flexShrink: 0 }}
+        style={{ width: 8, height: ROW_HEIGHT, flexShrink: 0, lineHeight: 0 }}
       >
         {!call.mocked && !call.blocked && (
           <span className="dot" style={{ color: statusColor }} />
