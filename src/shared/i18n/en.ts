@@ -14,7 +14,7 @@ export const en = {
       all: 'All', read: 'Read', write: 'Write', sign: 'Sign',
       errors: 'Errors', mocked: 'Mocked',
     },
-    list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When' },
+    list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When', throttleHint: 'Matched by a Throttle rule — delay: {n}ms' },
     copy: {
       button: 'Copy',
       title: 'Copy as',
