@@ -153,9 +153,16 @@ export const en = {
     },
     mock: {
       sub: 'Intercept RPC calls and return canned responses',
-      locked: 'Mock rules — coming in P1',
-      lockedHint: 'Intercept RPC requests and return custom responses. Available in the next release.',
-      new: 'New rule',
+      newRule: 'New rule',
+      activeCount: '{active} / {total} active',
+      empty: 'No mock rules yet. Capture a call and click Mock, or add one from here.',
+      columnMethod: 'Method',
+      columnOrigin: 'Origin',
+      columnResponse: 'Response',
+      columnDelay: 'Delay',
+    },
+    mockRules: {
+      editTitle: 'Edit mock rule',
     },
     advanced: {
       sub: 'Developer-facing options',

@@ -155,9 +155,16 @@ export const zh: I18nDict = {
     },
     mock: {
       sub: '拦截 RPC 调用并返回预定义响应',
-      locked: 'Mock 规则 — P1 版本',
-      lockedHint: '拦截 RPC 请求并返回自定义响应。下一版本推出。',
-      new: '新建规则',
+      newRule: '新建规则',
+      activeCount: '{active} / {total} 条启用',
+      empty: '暂无 Mock 规则。在详情面板点 Mock 按钮,或从这里新建一条。',
+      columnMethod: '方法',
+      columnOrigin: '来源',
+      columnResponse: '响应',
+      columnDelay: '延迟',
+    },
+    mockRules: {
+      editTitle: '编辑 Mock 规则',
     },
     advanced: {
       sub: '面向开发者的选项',
