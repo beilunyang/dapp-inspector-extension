@@ -29,10 +29,12 @@ export type PageMsg =
 
 export type ControlMsg =
   | { source: 'dappinsp-ctrl'; kind: 'monitoring'; enabled: boolean }
-  | { source: 'dappinsp-ctrl'; kind: 'ignored-methods'; list: string[] };
+  | { source: 'dappinsp-ctrl'; kind: 'ignored-methods'; list: string[] }
+  | { source: 'dappinsp-ctrl'; kind: 'replay'; method: string; params: unknown };
 
 export type AdminMsg =
-  | { source: 'dappinsp-admin'; kind: 'clear-all' };
+  | { source: 'dappinsp-admin'; kind: 'clear-all' }
+  | { source: 'dappinsp-admin'; kind: 'replay'; tabId: number; method: string; params: unknown };
 
 export type PanelPush =
   | { kind: 'snapshot'; calls: CapturedCall[]; provenance: TabProvenance }

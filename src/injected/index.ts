@@ -20,6 +20,14 @@ import type { ControlMsg } from '@shared/messages';
     if (!d || d.source !== 'dappinsp-ctrl') return;
     if (d.kind === 'monitoring') monitoring = d.enabled;
     if (d.kind === 'ignored-methods') ignored = new Set(d.list);
+    if (d.kind === 'replay') {
+      // Re-fire the request against the (already wrapped) provider. The wrap
+      // will capture it as a new call in the usual pipeline.
+      const eth = (window as unknown as { ethereum?: { request?: (args: { method: string; params: unknown }) => Promise<unknown> } }).ethereum;
+      if (eth?.request) {
+        eth.request({ method: d.method, params: d.params as never }).catch(() => { /* errors surface through call:error */ });
+      }
+    }
   });
 
   // EIP-1193: wrap existing or trap setter
