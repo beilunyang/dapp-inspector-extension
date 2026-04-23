@@ -9,6 +9,7 @@ interface BlockRulesStore {
   upsert(rule: BlockRule): Promise<void>;
   remove(id: string): Promise<void>;
   toggle(id: string, enabled: boolean): Promise<void>;
+  reorder(orderedIds: string[]): Promise<void>;
 }
 
 export const useBlockRulesStore = create<BlockRulesStore>((set, get) => ({
@@ -39,6 +40,20 @@ export const useBlockRulesStore = create<BlockRulesStore>((set, get) => ({
     set({ rules: next });
     await saveBlockRules(next);
   },
+  async reorder(orderedIds) {
+    // Array order is match priority — earlier = higher priority. Re-sort
+    // the store by the provided id order; any rules missing from the list
+    // (shouldn't happen in normal UI flow, but defensive) are appended.
+    const byId = new Map(get().rules.map(r => [r.id, r]));
+    const reordered: BlockRule[] = [];
+    for (const id of orderedIds) {
+      const r = byId.get(id);
+      if (r) { reordered.push(r); byId.delete(id); }
+    }
+    for (const r of byId.values()) reordered.push(r);
+    set({ rules: reordered });
+    await saveBlockRules(reordered);
+  },
 }));
 
 if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
@@ -49,4 +64,6 @@ if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
   });
 }
 
-void useBlockRulesStore.getState().hydrate();
+if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+  void useBlockRulesStore.getState().hydrate();
+}

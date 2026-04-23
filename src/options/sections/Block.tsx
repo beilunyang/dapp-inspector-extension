@@ -5,6 +5,7 @@ import type { BlockRule } from '@shared/rules';
 import { Icon } from '@shared/ui/Icon';
 import { PageTitle, MiniToggle } from '../primitives';
 import { BlockRuleEditDialog } from '../../panel/Detail/BlockRuleForm';
+import { useReorderable } from '../useReorderable';
 
 export function Block() {
   const t = useT();
@@ -12,6 +13,9 @@ export function Block() {
   const upsert = useBlockRulesStore(s => s.upsert);
   const remove = useBlockRulesStore(s => s.remove);
   const toggle = useBlockRulesStore(s => s.toggle);
+  const reorder = useBlockRulesStore(s => s.reorder);
+
+  const { draggingId, overId, rowProps } = useReorderable(rules, reorder);
 
   const [editing, setEditing] = useState<BlockRule | null>(null);
   const [showNew, setShowNew] = useState(false);
@@ -62,81 +66,105 @@ export function Block() {
           {t('options.blockSec.empty')}
         </div>
       ) : (
-        <div
-          style={{
-            background: 'rgb(var(--surface))',
-            border: '1px solid rgb(var(--border-soft))',
-            borderRadius: 6,
-            overflow: 'hidden',
-          }}
-        >
+        <>
           <div
-            className="flex items-center uppercase"
             style={{
-              height: 30, padding: '0 12px',
-              fontSize: 10.5, fontWeight: 600, letterSpacing: 0.8,
-              color: 'rgb(var(--fg-dim))',
-              borderBottom: '1px solid rgb(var(--border-soft))',
+              background: 'rgb(var(--surface))',
+              border: '1px solid rgb(var(--border-soft))',
+              borderRadius: 6,
+              overflow: 'hidden',
             }}
           >
-            <span style={{ width: 40 }}></span>
-            <span style={{ flex: 1.4 }}>{t('options.blockSec.columnMethod')}</span>
-            <span style={{ flex: 1 }}>{t('options.blockSec.columnOrigin')}</span>
-            <span style={{ width: 90 }}>{t('options.blockSec.columnMode')}</span>
-            <span style={{ width: 120 }}>{t('options.blockSec.columnValue')}</span>
-            <span style={{ width: 30 }}></span>
-          </div>
-
-          {rules.map((r, i) => (
             <div
-              key={r.id}
-              className="flex items-center"
+              className="flex items-center uppercase"
               style={{
-                height: 44, padding: '0 12px',
-                fontSize: 12.5,
-                borderBottom: i < rules.length - 1 ? '1px solid rgb(var(--border-soft))' : 'none',
-                opacity: r.enabled ? 1 : 0.55,
+                height: 30, padding: '0 8px 0 12px',
+                fontSize: 10.5, fontWeight: 600, letterSpacing: 0.8,
+                color: 'rgb(var(--fg-dim))',
+                borderBottom: '1px solid rgb(var(--border-soft))',
               }}
             >
-              <div style={{ width: 40 }}>
-                <MiniToggle value={r.enabled} onChange={(v) => void toggle(r.id, v)} />
-              </div>
-              <div className="mono truncate" style={{ flex: 1.4, fontWeight: 500 }}>
-                {r.method || '—'}
-              </div>
-              <div className="mono truncate" style={{ flex: 1, fontSize: 11.5, color: 'rgb(var(--fg-muted))' }}>
-                {r.origin || '*'}
-              </div>
-              <div style={{ width: 90 }}>
-                <span
-                  className="chip"
+              <span style={{ width: 24 }}></span>
+              <span style={{ width: 40 }}></span>
+              <span style={{ flex: 1.4 }}>{t('options.blockSec.columnMethod')}</span>
+              <span style={{ flex: 1 }}>{t('options.blockSec.columnOrigin')}</span>
+              <span style={{ width: 90 }}>{t('options.blockSec.columnMode')}</span>
+              <span style={{ width: 120 }}>{t('options.blockSec.columnValue')}</span>
+              <span style={{ width: 30 }}></span>
+            </div>
+
+            {rules.map((r, i) => {
+              const isDragging = draggingId === r.id;
+              const isOver = overId === r.id && draggingId !== r.id;
+              return (
+                <div
+                  key={r.id}
+                  {...rowProps(r.id)}
+                  className="flex items-center"
                   style={{
-                    fontSize: 10,
-                    color: r.mode === 'block' ? 'rgb(var(--red))' : 'rgb(var(--amber))',
+                    height: 44, padding: '0 8px 0 12px',
+                    fontSize: 12.5,
+                    borderBottom: i < rules.length - 1 ? '1px solid rgb(var(--border-soft))' : 'none',
+                    opacity: r.enabled ? (isDragging ? 0.4 : 1) : 0.55,
+                    background: isOver ? 'rgb(var(--accent) / 0.08)' : undefined,
+                    borderTop: isOver ? '2px solid rgb(var(--accent))' : '2px solid transparent',
+                    transition: 'background 0.1s',
                   }}
                 >
-                  {r.mode.toUpperCase()}
-                </span>
-              </div>
-              <div
-                className="mono truncate"
-                style={{ width: 120, fontSize: 11, color: 'rgb(var(--fg-muted))' }}
-                title={valueDescription(r)}
-              >
-                {valueDescription(r)}
-              </div>
-              <div style={{ width: 30, display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  className="btn icon ghost"
-                  onClick={() => setEditing(r)}
-                  aria-label="Edit rule"
-                >
-                  <Icon name="menu" size={13} style={{ color: 'rgb(var(--fg-dim))' }} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                  <div
+                    style={{
+                      width: 24, color: 'rgb(var(--fg-dim))',
+                      cursor: 'grab',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                    title={t('options.rulesShared.dragHandle')}
+                  >
+                    <Icon name="grip" size={12} />
+                  </div>
+                  <div style={{ width: 40 }}>
+                    <MiniToggle value={r.enabled} onChange={(v) => void toggle(r.id, v)} />
+                  </div>
+                  <div className="mono truncate" style={{ flex: 1.4, fontWeight: 500 }}>
+                    {r.method || '—'}
+                  </div>
+                  <div className="mono truncate" style={{ flex: 1, fontSize: 11.5, color: 'rgb(var(--fg-muted))' }}>
+                    {r.origin || '*'}
+                  </div>
+                  <div style={{ width: 90 }}>
+                    <span
+                      className="chip"
+                      style={{
+                        fontSize: 10,
+                        color: r.mode === 'block' ? 'rgb(var(--red))' : 'rgb(var(--amber))',
+                      }}
+                    >
+                      {r.mode.toUpperCase()}
+                    </span>
+                  </div>
+                  <div
+                    className="mono truncate"
+                    style={{ width: 120, fontSize: 11, color: 'rgb(var(--fg-muted))' }}
+                    title={valueDescription(r)}
+                  >
+                    {valueDescription(r)}
+                  </div>
+                  <div style={{ width: 30, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      className="btn icon ghost"
+                      onClick={() => setEditing(r)}
+                      aria-label="Edit rule"
+                    >
+                      <Icon name="menu" size={13} style={{ color: 'rgb(var(--fg-dim))' }} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="text-[11px] mt-2" style={{ color: 'rgb(var(--fg-dim))' }}>
+            {t('options.rulesShared.priorityHint')}
+          </div>
+        </>
       )}
 
       {showNew && (

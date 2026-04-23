@@ -166,6 +166,10 @@ export const zh: I18nDict = {
     mockRules: {
       editTitle: '编辑 Mock 规则',
     },
+    rulesShared: {
+      priorityHint: '靠前的规则优先匹配,可拖动排序。',
+      dragHandle: '拖动排序',
+    },
     blockSec: {
       sub: '在 RPC 调用到达钱包之前阻断或限速',
       newRule: '新建规则',
