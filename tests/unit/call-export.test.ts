@@ -16,14 +16,37 @@ const base = (over: Partial<CapturedCall> = {}): CapturedCall => ({
 });
 
 describe('toJsonRpcEnvelope', () => {
-  it('wraps the call in a standard envelope with id=1', () => {
-    const out = toJsonRpcEnvelope(base({ method: 'eth_call', params: [{ to: '0x1' }] }));
+  it('wraps ok calls with request + result in one envelope', () => {
+    const out = toJsonRpcEnvelope(base({ method: 'eth_call', params: [{ to: '0x1' }], result: '0xabc' }));
     const parsed = JSON.parse(out);
     expect(parsed).toEqual({
       jsonrpc: '2.0',
       id: 1,
       method: 'eth_call',
       params: [{ to: '0x1' }],
+      result: '0xabc',
+    });
+  });
+
+  it('wraps error calls with request + error in one envelope', () => {
+    const out = toJsonRpcEnvelope(base({
+      status: 'error',
+      result: undefined,
+      error: { code: 4001, message: 'user rejected' },
+    }));
+    const parsed = JSON.parse(out);
+    expect(parsed.error).toEqual({ code: 4001, message: 'user rejected' });
+    expect(parsed.result).toBeUndefined();
+  });
+
+  it('omits both result and error while pending', () => {
+    const out = toJsonRpcEnvelope(base({ status: 'pending', result: undefined }));
+    const parsed = JSON.parse(out);
+    expect(parsed).toEqual({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'eth_chainId',
+      params: [],
     });
   });
 
