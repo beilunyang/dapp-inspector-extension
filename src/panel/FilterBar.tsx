@@ -16,6 +16,7 @@ const CHIPS: ChipDef[] = [
   { id: 'read', labelKey: 'panel.filters.read', color: 'rgb(var(--fg-muted))' },
   { id: 'write', labelKey: 'panel.filters.write', color: 'rgb(var(--amber))' },
   { id: 'sign', labelKey: 'panel.filters.sign', color: 'rgb(var(--violet))' },
+  { id: 'subscribe', labelKey: 'panel.filters.subscribe', color: 'rgb(var(--accent))' },
   { id: 'errors', labelKey: 'panel.filters.errors', color: 'rgb(var(--red))' },
   { id: 'mocked', labelKey: 'panel.filters.mocked', color: 'rgb(var(--violet))' },
 ];
