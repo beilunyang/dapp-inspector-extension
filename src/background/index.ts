@@ -51,6 +51,12 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
     const [store, tracker] = await Promise.all([storeReady, trackerReady]);
     const pageMsg = msg as PageMsg;
 
+    // Push to the panel first, then persist. Both events land on the same
+    // port so message order is preserved, but if we awaited IDB before
+    // pushing, a fast-failing call:error could race ahead of the slower
+    // call:start append (which also awaits tracker.onCallStart), leaving
+    // the row stuck at "pending" until the next snapshot refresh.
+
     if (pageMsg.kind === 'provider') {
       const prov = await tracker.onProvider(tabId, pageMsg.payload, origin, url);
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
@@ -62,9 +68,9 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
         params: pageMsg.payload.params, startedAt: pageMsg.payload.startedAt,
         status: 'pending',
       };
+      ports.pushPanel(tabId, { kind: 'append', call });
       await store.append(call);
       const prov = await tracker.onCallStart(tabId, call, url);
-      ports.pushPanel(tabId, { kind: 'append', call });
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
       await ports.pushPopup(settings.monitoring);
     } else if (pageMsg.kind === 'call:end') {
@@ -72,19 +78,19 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
         status: 'ok', endedAt: pageMsg.payload.endedAt,
         durationMs: pageMsg.payload.durationMs, result: pageMsg.payload.result,
       };
+      ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       const updated = await store.patch(pageMsg.payload.id, patch);
       if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
         await tracker.onProvider(tabId, updated.providerInfo, origin, url);
       }
-      ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await ports.pushPopup(settings.monitoring);
     } else if (pageMsg.kind === 'call:error') {
       const patch: Partial<CapturedCall> = {
         status: 'error', endedAt: pageMsg.payload.endedAt,
         durationMs: pageMsg.payload.durationMs, error: pageMsg.payload.error,
       };
-      await store.patch(pageMsg.payload.id, patch);
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
+      await store.patch(pageMsg.payload.id, patch);
       await ports.pushPopup(settings.monitoring);
     }
   })();

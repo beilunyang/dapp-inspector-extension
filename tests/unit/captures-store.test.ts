@@ -32,4 +32,21 @@ describe('captures-store', () => {
     useCapturesStore.getState().apply({ kind: 'clear' });
     expect(useCapturesStore.getState().calls).toHaveLength(0);
   });
+
+  it('replays a patch that arrived before its append (out-of-order delivery)', () => {
+    useCapturesStore.getState().apply({ kind: 'update', id: 'a', patch: { status: 'error' } });
+    expect(useCapturesStore.getState().calls).toHaveLength(0);
+    useCapturesStore.getState().apply({ kind: 'append', call: mk('a', 100) });
+    expect(useCapturesStore.getState().calls).toHaveLength(1);
+    expect(useCapturesStore.getState().calls[0].status).toBe('error');
+  });
+
+  it('merges multiple pre-append patches onto the appended call', () => {
+    useCapturesStore.getState().apply({ kind: 'update', id: 'a', patch: { status: 'error' } });
+    useCapturesStore.getState().apply({ kind: 'update', id: 'a', patch: { durationMs: 42 } });
+    useCapturesStore.getState().apply({ kind: 'append', call: mk('a', 100) });
+    const call = useCapturesStore.getState().calls[0];
+    expect(call.status).toBe('error');
+    expect(call.durationMs).toBe(42);
+  });
 });
