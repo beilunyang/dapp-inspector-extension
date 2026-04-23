@@ -134,7 +134,7 @@ function Row({ call, selected, onClick, offset, t }: {
         className="inline-flex items-center justify-center"
         style={{ width: 8, flexShrink: 0 }}
       >
-        {call.status !== 'ok' && !call.mocked && !call.blocked && (
+        {!call.mocked && !call.blocked && (
           <span className="dot" style={{ color: statusColor }} />
         )}
       </span>
