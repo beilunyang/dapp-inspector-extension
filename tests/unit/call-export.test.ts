@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toJsonRpcEnvelope, toEthersSnippet, toMarkdownRow } from '@shared/call-export';
+import { toJsonRpcEnvelope, toMarkdownRow } from '@shared/call-export';
 import type { CapturedCall } from '@shared/types';
 
 const base = (over: Partial<CapturedCall> = {}): CapturedCall => ({
@@ -58,20 +58,6 @@ describe('toJsonRpcEnvelope', () => {
   it('uses [] when params is null/undefined', () => {
     const out = toJsonRpcEnvelope(base({ params: null }));
     expect(JSON.parse(out).params).toEqual([]);
-  });
-});
-
-describe('toEthersSnippet', () => {
-  it('emits a provider.send call with JSON-encoded params', () => {
-    const snippet = toEthersSnippet(base({ method: 'personal_sign', params: ['hi', '0x1'] }));
-    expect(snippet).toContain('new ethers.JsonRpcProvider(RPC_URL)');
-    expect(snippet).toContain('provider.send("personal_sign", ["hi","0x1"])');
-    expect(snippet).toContain('console.log(result)');
-  });
-
-  it('includes a comment with the origin when present', () => {
-    const snippet = toEthersSnippet(base({ origin: 'https://app.foo' }));
-    expect(snippet).toMatch(/captured from https:\/\/app\.foo/);
   });
 });
 

@@ -33,21 +33,6 @@ export function toJsonRpcEnvelope(call: CapturedCall): string {
 }
 
 /**
- * ethers.js v6+ snippet. We can't actually cURL a wallet-injected provider,
- * so this is more honest: it's what you'd paste into a Node script + ethers
- * to re-issue the same request against a raw RPC endpoint.
- */
-export function toEthersSnippet(call: CapturedCall): string {
-  const params = JSON.stringify(normalizeParams(call.params));
-  return [
-    `// ${call.method}${call.origin ? ` · captured from ${call.origin}` : ''}`,
-    `const provider = new ethers.JsonRpcProvider(RPC_URL);`,
-    `const result = await provider.send(${JSON.stringify(call.method)}, ${params});`,
-    `console.log(result);`,
-  ].join('\n');
-}
-
-/**
  * Markdown table row with a header, ready to paste into a GitHub issue.
  * Status cell shows MOCKED for mocked calls to make reports accurate.
  */
