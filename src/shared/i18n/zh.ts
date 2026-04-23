@@ -6,7 +6,6 @@ export const zh: I18nDict = {
     toolbar: {
       search: '按方法或来源筛选',
       clear: '清空',
-      export: '导出',
       settings: '设置',
       monitoring: '监控',
       record: '记录',

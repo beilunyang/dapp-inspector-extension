@@ -4,7 +4,6 @@ export const en = {
     toolbar: {
       search: 'Filter by method or origin',
       clear: 'Clear',
-      export: 'Export',
       settings: 'Settings',
       monitoring: 'Monitoring',
       record: 'Record',
