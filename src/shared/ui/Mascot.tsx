@@ -34,9 +34,11 @@ export function Mascot({
       {/* Eyes — sclera */}
       <circle cx="36" cy="46" r="6.5" fill="#fff" />
       <circle cx="60" cy="46" r="6.5" fill="#fff" />
-      {/* Pupils */}
-      <circle cx="38" cy="47" r="2.8" fill="rgb(var(--accent-fg))" />
-      <circle cx="62" cy="47" r="2.8" fill="rgb(var(--accent-fg))" />
+      {/* Pupils — fixed dark shade (like the toolbar icon). --accent-fg
+          is ~white in light theme, which makes pupils blend into the
+          sclera and vanish. */}
+      <circle cx="38" cy="47" r="2.8" fill="#1c1834" />
+      <circle cx="62" cy="47" r="2.8" fill="#1c1834" />
       {/* Mouth */}
       {mouthByMood[mood]}
     </svg>
