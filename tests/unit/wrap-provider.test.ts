@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { wrapProvider, createEmitter } from '../../src/injected/wrap-provider';
+import { wrapProvider, createEmitter, markNextRequestAsReplay } from '../../src/injected/wrap-provider';
 import type { ProviderInfo } from '@shared/types';
 
 const info: ProviderInfo = { name: 'Test', rdns: 'test.wallet' };
@@ -46,6 +46,22 @@ describe('wrapProvider', () => {
     // And it tags the emitted envelope with the page origin.
     const providerCall = emit.mock.calls.find(c => c[0].kind === 'provider');
     expect(typeof providerCall?.[0].origin).toBe('string');
+  });
+
+  it('tags the next call:start with replayed after markNextRequestAsReplay', async () => {
+    const provider = { request: vi.fn().mockResolvedValue('ok') };
+    wrapProvider(provider as any, info, emit);
+    markNextRequestAsReplay();
+    await provider.request({ method: 'eth_call', params: [] });
+    await provider.request({ method: 'eth_call', params: [] });
+
+    const starts = emit.mock.calls
+      .map(c => c[0])
+      .filter(m => m.kind === 'call:start');
+    expect(starts).toHaveLength(2);
+    expect(starts[0].payload.replayed).toBe(true);
+    // Flag is single-shot: second call isn't tagged.
+    expect(starts[1].payload.replayed).toBeUndefined();
   });
 });
 

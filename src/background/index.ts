@@ -74,6 +74,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
         method: pageMsg.payload.method, kind: classify(pageMsg.payload.method),
         params: pageMsg.payload.params, startedAt: pageMsg.payload.startedAt,
         status: 'pending',
+        ...(pageMsg.payload.replayed ? { replayed: true } : {}),
       };
       ports.pushPanel(tabId, { kind: 'append', call });
       await store.append(call);
@@ -98,6 +99,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
         durationMs: pageMsg.payload.durationMs, error: pageMsg.payload.error,
       };
       if (pageMsg.payload.mocked) patch.mocked = true;
+      if (pageMsg.payload.blocked) patch.blocked = true;
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await store.patch(pageMsg.payload.id, patch);
       await ports.pushPopup(settings.monitoring);
