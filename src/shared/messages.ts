@@ -1,4 +1,5 @@
 import type { CapturedCall, ProviderInfo, TabProvenance } from './types';
+import type { BlockRule } from './rules';
 
 export interface CallStart {
   id: string;
@@ -30,11 +31,16 @@ export type PageMsg =
 export type ControlMsg =
   | { source: 'dappinsp-ctrl'; kind: 'monitoring'; enabled: boolean }
   | { source: 'dappinsp-ctrl'; kind: 'ignored-methods'; list: string[] }
-  | { source: 'dappinsp-ctrl'; kind: 'replay'; method: string; params: unknown };
+  | { source: 'dappinsp-ctrl'; kind: 'replay'; method: string; params: unknown }
+  | { source: 'dappinsp-ctrl'; kind: 'block-rules'; rules: BlockRule[] };
 
 export type AdminMsg =
   | { source: 'dappinsp-admin'; kind: 'clear-all' }
   | { source: 'dappinsp-admin'; kind: 'replay'; tabId: number; method: string; params: unknown };
+
+// Kept for potential future uses (e.g., Mock rule broadcast) but currently
+// content scripts read chrome.storage.local directly.
+export type { BlockRule };
 
 export type PanelPush =
   | { kind: 'snapshot'; calls: CapturedCall[]; provenance: TabProvenance }
