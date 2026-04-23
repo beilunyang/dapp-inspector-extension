@@ -1,6 +1,7 @@
 import {
   wrapProvider,
   createEmitter,
+  markNextRequestAsReplay,
   type EmitFn,
   type PreRequestHook,
   type PreRequestAction,
@@ -103,6 +104,7 @@ import {
     if (d.kind === 'replay') {
       const eth = (window as unknown as { ethereum?: { request?: (args: { method: string; params: unknown }) => Promise<unknown> } }).ethereum;
       if (eth?.request) {
+        markNextRequestAsReplay();
         eth.request({ method: d.method, params: d.params as never }).catch(() => { /* errors surface through call:error */ });
       }
     }

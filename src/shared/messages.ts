@@ -11,6 +11,7 @@ export interface CallStart {
   // background prefers this over sender.tab.url because the tab URL can
   // lag during navigation (e.g. still "chrome://newtab/" at document_start).
   origin: string;
+  replayed?: boolean;
 }
 export interface CallEnd {
   id: string;
@@ -25,6 +26,7 @@ export interface CallError {
   durationMs: number;
   error: { code: number; message: string; data?: unknown };
   mocked?: boolean;
+  blocked?: boolean;
 }
 
 export type PageMsg =

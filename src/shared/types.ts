@@ -26,6 +26,10 @@ export interface CapturedCall {
   truncated?: boolean;
   /** True when the result/error came from a Mock rule rather than the real provider. */
   mocked?: boolean;
+  /** True when the call was short-circuited with an error by a Block rule. */
+  blocked?: boolean;
+  /** True when the call was dispatched by a user-triggered Replay. */
+  replayed?: boolean;
 }
 
 export interface TabProvenance {

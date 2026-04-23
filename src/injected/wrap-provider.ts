@@ -11,6 +11,14 @@ interface EIP1193Provider {
 
 const WRAPPED = new WeakSet<EIP1193Provider>();
 
+// Page-world flag set by the injected replay handler right before it calls
+// ethereum.request. wrappedRequest consumes it on the next invocation to
+// tag the emitted call:start with `replayed: true`. Single-shot; cleared
+// on consumption. Collisions with a concurrent user-driven request are
+// theoretically possible but replays are user-initiated so it's fine.
+let replayPending = false;
+export function markNextRequestAsReplay(): void { replayPending = true; }
+
 export type EmitFn = (msg: PageMsg) => void;
 
 export interface RequestContext {
@@ -62,10 +70,12 @@ export function wrapProvider(
     const method = args?.method ?? '<unknown>';
     const startedAt = Date.now();
     const startPerf = performance.now();
+    const replayed = replayPending;
+    if (replayed) replayPending = false;
     try {
       emit({
         source: 'dappinsp', kind: 'call:start',
-        payload: { id, method, params: safeClone(args?.params), providerInfo: info, startedAt, origin: pageOrigin() },
+        payload: { id, method, params: safeClone(args?.params), providerInfo: info, startedAt, origin: pageOrigin(), ...(replayed ? { replayed: true } : {}) },
       });
     } catch {}
     void classify; // referenced to avoid unused import under some tsconfigs
@@ -86,7 +96,7 @@ export function wrapProvider(
         try {
           emit({
             source: 'dappinsp', kind: 'call:error',
-            payload: { id, endedAt, durationMs: performance.now() - startPerf, error: action.error },
+            payload: { id, endedAt, durationMs: performance.now() - startPerf, error: action.error, blocked: true },
           });
         } catch {}
         // Throw an EIP-1193 style error so the DApp sees a real rejection.
