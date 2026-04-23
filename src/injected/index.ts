@@ -1,12 +1,24 @@
-import { wrapProvider, createEmitter, type EmitFn, type PreRequestHook, type PreRequestAction } from './wrap-provider';
+import {
+  wrapProvider,
+  createEmitter,
+  type EmitFn,
+  type PreRequestHook,
+  type PreRequestAction,
+  type MockRequestHook,
+  type MockAction,
+} from './wrap-provider';
 import type { ProviderInfo } from '@shared/types';
 import type { ControlMsg } from '@shared/messages';
 import {
   findMatchingBlockRule,
+  findMatchingMockRule,
   type BlockRule,
+  type MockRule,
   DEFAULT_BLOCK_ERROR_CODE,
   DEFAULT_BLOCK_ERROR_MESSAGE,
   DEFAULT_THROTTLE_MS,
+  DEFAULT_MOCK_ERROR_CODE,
+  DEFAULT_MOCK_ERROR_MESSAGE,
 } from '@shared/rules';
 
 (() => {
@@ -14,6 +26,9 @@ import {
   let monitoring = true;
   let ignored = new Set<string>();
   let blockRules: BlockRule[] = [];
+  let mockRules: MockRule[] = [];
+  let blockRulesLoaded = false;
+  let mockRulesLoaded = false;
 
   const emitGated: EmitFn = (msg) => {
     if (!monitoring) return;
@@ -36,6 +51,38 @@ import {
     return { kind: 'delay', ms: rule.throttleMs ?? DEFAULT_THROTTLE_MS };
   };
 
+  const mockRequest: MockRequestHook = (ctx): MockAction => {
+    const rule = findMatchingMockRule(mockRules, ctx.method, ctx.origin);
+    if (!rule) return { kind: 'pass' };
+    const delayMs = rule.delayMs && rule.delayMs > 0 ? rule.delayMs : undefined;
+    if (rule.responseType === 'error') {
+      return {
+        kind: 'mock-error',
+        error: {
+          code: rule.errorCode ?? DEFAULT_MOCK_ERROR_CODE,
+          message: rule.errorMessage ?? DEFAULT_MOCK_ERROR_MESSAGE,
+        },
+        delayMs,
+      };
+    }
+    try {
+      const result = JSON.parse(rule.responseBody);
+      return { kind: 'mock-result', result, delayMs };
+    } catch {
+      // Invalid JSON body — let the real provider handle it rather than
+      // accidentally silencing the call.
+      return { kind: 'pass' };
+    }
+  };
+
+  function signalReady() {
+    if (!blockRulesLoaded || !mockRulesLoaded) return;
+    try {
+      (window as unknown as { __dappInspectorRulesLoaded?: boolean }).__dappInspectorRulesLoaded = true;
+      window.dispatchEvent(new Event('dappinspector:rules-loaded'));
+    } catch { /* empty */ }
+  }
+
   // Control channel from isolated world
   window.addEventListener('message', (e) => {
     if (e.source !== window) return;
@@ -45,11 +92,13 @@ import {
     if (d.kind === 'ignored-methods') ignored = new Set(d.list);
     if (d.kind === 'block-rules') {
       blockRules = d.rules;
-      // Surface readiness so E2E tests / DApps can wait for rules to land.
-      try {
-        (window as unknown as { __dappInspectorRulesLoaded?: boolean }).__dappInspectorRulesLoaded = true;
-        window.dispatchEvent(new Event('dappinspector:rules-loaded'));
-      } catch { /* empty */ }
+      blockRulesLoaded = true;
+      signalReady();
+    }
+    if (d.kind === 'mock-rules') {
+      mockRules = d.rules;
+      mockRulesLoaded = true;
+      signalReady();
     }
     if (d.kind === 'replay') {
       const eth = (window as unknown as { ethereum?: { request?: (args: { method: string; params: unknown }) => Promise<unknown> } }).ethereum;
@@ -64,7 +113,7 @@ import {
     const desc = Object.getOwnPropertyDescriptor(window, 'ethereum');
     const current = (window as unknown as { ethereum?: unknown }).ethereum;
     if (current && typeof current === 'object') {
-      wrapProvider(current as Parameters<typeof wrapProvider>[0], { name: 'window.ethereum' }, emitGated, preRequest);
+      wrapProvider(current as Parameters<typeof wrapProvider>[0], { name: 'window.ethereum' }, emitGated, preRequest, mockRequest);
     }
     if (!desc || desc.configurable !== false) {
       let stored = current;
@@ -74,7 +123,7 @@ import {
         set(v) {
           stored = v;
           if (v && typeof v === 'object') {
-            try { wrapProvider(v, { name: 'window.ethereum' }, emitGated, preRequest); } catch {}
+            try { wrapProvider(v, { name: 'window.ethereum' }, emitGated, preRequest, mockRequest); } catch {}
           }
         },
       });
@@ -85,7 +134,7 @@ import {
   window.addEventListener('eip6963:announceProvider', (e: Event) => {
     const detail = (e as CustomEvent<{ info: ProviderInfo; provider: unknown }>).detail;
     if (!detail?.provider || typeof detail.provider !== 'object') return;
-    try { wrapProvider(detail.provider as Parameters<typeof wrapProvider>[0], detail.info, emitGated, preRequest); } catch {}
+    try { wrapProvider(detail.provider as Parameters<typeof wrapProvider>[0], detail.info, emitGated, preRequest, mockRequest); } catch {}
   });
   try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch {}
 })();

@@ -71,3 +71,39 @@ export function findMatchingBlockRule(
 export const DEFAULT_BLOCK_ERROR_CODE = 4001;
 export const DEFAULT_BLOCK_ERROR_MESSAGE = 'Blocked by DApp Inspector';
 export const DEFAULT_THROTTLE_MS = 1000;
+
+// ─── Mock rules ──────────────────────────────────────────────────────────
+
+export type MockResponseType = 'result' | 'error';
+
+export interface MockRule {
+  id: string;
+  enabled: boolean;
+  method: string;
+  matchMode: MatchMode;
+  origin: string;
+  responseType: MockResponseType;
+  /** JSON text — parsed at request time. Used when responseType === 'result'. */
+  responseBody: string;
+  delayMs?: number;            // optional artificial latency
+  errorCode?: number;          // used when responseType === 'error'
+  errorMessage?: string;
+}
+
+export function findMatchingMockRule(
+  rules: MockRule[],
+  method: string,
+  origin: string,
+): MockRule | undefined {
+  for (const r of rules) {
+    if (!r.enabled) continue;
+    if (!methodMatches(r, method)) continue;
+    if (!originMatches(r, origin)) continue;
+    return r;
+  }
+  return undefined;
+}
+
+export const DEFAULT_MOCK_ERROR_CODE = -32000;
+export const DEFAULT_MOCK_ERROR_MESSAGE = 'Mocked error';
+export const DEFAULT_MOCK_DELAY_MS = 0;
