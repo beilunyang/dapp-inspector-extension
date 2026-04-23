@@ -131,6 +131,14 @@ function Row({ call, selected, onClick, offset, t }: {
       onMouseLeave={e => !selected && (e.currentTarget.style.background = 'transparent')}
     >
       <span
+        className="inline-flex items-center justify-center"
+        style={{ width: 8, flexShrink: 0 }}
+      >
+        {call.status !== 'ok' && !call.mocked && !call.blocked && (
+          <span className="dot" style={{ color: statusColor }} />
+        )}
+      </span>
+      <span
         className="mono inline-flex items-center justify-center"
         style={{
           fontSize: 9.5,
@@ -164,9 +172,6 @@ function Row({ call, selected, onClick, offset, t }: {
         />
       )}
       {call.mocked && <Tag color="rgb(var(--violet))" label="M" title="Mocked response" />}
-      {call.status !== 'ok' && !call.mocked && !call.blocked && (
-        <span className="dot" style={{ color: statusColor }} />
-      )}
       <span
         className="mono"
         style={{ width: 56, textAlign: 'right', color: 'rgb(var(--fg-dim))', fontSize: 10.5 }}
