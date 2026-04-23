@@ -198,8 +198,6 @@ export const zh: I18nDict = {
       version: '版本',
       engine: '引擎',
       injected: '注入脚本',
-      lastError: '最近错误',
-      none: '无',
       clearHistory: '清空全部历史',
       clearHistoryHint: '永久删除当前浏览器里所有已捕获调用。',
       clearHistoryConfirm: '输入 CLEAR 确认',

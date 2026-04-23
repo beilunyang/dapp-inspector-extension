@@ -29,8 +29,7 @@ export function Advanced() {
       >
         <DiagItem label={t('options.advanced.version')} value={chrome.runtime.getManifest().version} />
         <DiagItem label={t('options.advanced.engine')} value={engineLabel()} />
-        <DiagItem label={t('options.advanced.injected')} value="eip-1193 + eip-6963" />
-        <DiagItem label={t('options.advanced.lastError')} value={t('options.advanced.none')} ok />
+        <DiagItem label={t('options.advanced.injected')} value="eip-1193 · eip-6963 · block/mock/replay" />
       </div>
 
       {/* Danger zone: clear history */}

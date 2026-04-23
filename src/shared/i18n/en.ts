@@ -196,8 +196,6 @@ export const en = {
       version: 'Version',
       engine: 'Engine',
       injected: 'Injected script',
-      lastError: 'Last error',
-      none: 'None',
       clearHistory: 'Clear all history',
       clearHistoryHint: 'Permanently deletes every captured call from this browser.',
       clearHistoryConfirm: 'Type CLEAR to confirm',
