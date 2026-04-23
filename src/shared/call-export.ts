@@ -4,17 +4,32 @@
 import type { CapturedCall } from './types';
 
 /**
- * JSON-RPC 2.0 envelope, pretty-printed, with a numeric id that mirrors the
- * standard wallet-provider behavior. We don't preserve our nanoid call id
- * because consumers (web3 libs, RPC proxies) expect integer ids.
+ * JSON-RPC envelope, pretty-printed, with a numeric id=1 that mirrors the
+ * standard wallet-provider behavior. In JSON-RPC 2.0 strict terms the
+ * request and response travel as separate messages, but for debugging it
+ * is overwhelmingly more useful to have both sides in one object. So:
+ *
+ * - status=ok     → envelope gains `result` alongside method/params
+ * - status=error  → envelope gains `error` alongside method/params
+ * - status=pending → response fields omitted
+ *
+ * The structure still parses as JSON and every well-formed JSON-RPC tool
+ * will ignore unknown fields on the request side and accept the standard
+ * response shape.
  */
 export function toJsonRpcEnvelope(call: CapturedCall): string {
-  return JSON.stringify({
+  const envelope: Record<string, unknown> = {
     jsonrpc: '2.0',
     id: 1,
     method: call.method,
     params: normalizeParams(call.params),
-  }, null, 2);
+  };
+  if (call.status === 'ok' && call.result !== undefined) {
+    envelope.result = call.result;
+  } else if (call.status === 'error' && call.error) {
+    envelope.error = call.error;
+  }
+  return JSON.stringify(envelope, null, 2);
 }
 
 /**
