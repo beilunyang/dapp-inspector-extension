@@ -5,8 +5,18 @@ export function createTabTracker(store: BgStore) {
   async function getOrInit(tabId: number, hints?: { origin?: string; url?: string }): Promise<TabProvenance> {
     const snap = await store.snapshot(tabId);
     const base = snap.provenance;
-    if (hints?.origin && !base.origin) base.origin = hints.origin;
-    if (hints?.url && !base.url) base.url = hints.url;
+    if (hints?.origin) {
+      // Cross-origin navigation within the same tabId: the old chainId is
+      // stale (the new site may be on a different network). Clear it so
+      // stale values don't linger until the next eth_chainId call.
+      // Wallets dedup by rdns in onProvider/onCallStart, so they heal
+      // automatically on the next announceProvider.
+      if (base.origin && base.origin !== hints.origin) {
+        base.chainId = undefined;
+      }
+      base.origin = hints.origin;
+    }
+    if (hints?.url) base.url = hints.url;
     return base;
   }
 
