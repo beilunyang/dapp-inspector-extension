@@ -25,6 +25,8 @@ export function MethodList() {
   const calls = useCapturesStore(s => s.calls);
   const search = useViewStore(s => s.search);
   const kinds = useViewStore(s => s.kinds);
+  const errorsOnly = useViewStore(s => s.errorsOnly);
+  const mockedOnly = useViewStore(s => s.mockedOnly);
   const selectedId = useViewStore(s => s.selectedCallId);
   const select = useViewStore(s => s.select);
 
@@ -32,10 +34,12 @@ export function MethodList() {
     const q = search.toLowerCase();
     return calls.filter(c => {
       if (kinds.size > 0 && !kinds.has(c.kind)) return false;
+      if (errorsOnly && c.status !== 'error') return false;
+      if (mockedOnly && !c.mocked) return false;
       if (!q) return true;
       return c.method.toLowerCase().includes(q) || c.origin.toLowerCase().includes(q);
     });
-  }, [calls, search, kinds]);
+  }, [calls, search, kinds, errorsOnly, mockedOnly]);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const virt = useVirtualizer({
