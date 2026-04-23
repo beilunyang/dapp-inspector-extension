@@ -18,6 +18,16 @@ export const zh: I18nDict = {
       errors: '错误', mocked: '模拟',
     },
     list: { method: '方法', origin: '来源', status: '状态', duration: '耗时', ts: '时间' },
+    replay: {
+      title: '重放调用',
+      paramsLabel: '参数(可编辑 JSON)',
+      reverted: '已恢复原参数',
+      edited: '← 已修改',
+      warnReprompt: '重放会在原 DApp 上下文中重新发起,钱包仍会弹窗授权。',
+      invalidJson: 'JSON 格式错误 — 修正后再发送',
+      revert: '恢复原参数',
+      send: '发送 (⌘↵)',
+    },
     detail: {
       tabs: { params: '参数', result: '返回值', timing: '耗时', raw: '原始数据' },
       sec: {

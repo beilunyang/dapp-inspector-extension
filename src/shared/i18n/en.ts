@@ -16,6 +16,16 @@ export const en = {
       errors: 'Errors', mocked: 'Mocked',
     },
     list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When' },
+    replay: {
+      title: 'Replay call',
+      paramsLabel: 'Parameters (editable JSON)',
+      reverted: 'Reverted to original',
+      edited: '← edited',
+      warnReprompt: 'Replay fires in the original DApp context; the wallet will prompt again.',
+      invalidJson: 'Invalid JSON — fix before sending',
+      revert: 'Revert',
+      send: 'Send (⌘↵)',
+    },
     detail: {
       tabs: { params: 'Parameters', result: 'Result', timing: 'Timing', raw: 'Raw' },
       sec: {

@@ -22,11 +22,20 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
   void (async () => {
     // Admin messages can arrive from any extension surface (no sender.tab)
     if (msg && (msg as AdminMsg).source === 'dappinsp-admin') {
-      const store = await storeReady;
-      if ((msg as AdminMsg).kind === 'clear-all') {
+      const adminMsg = msg as AdminMsg;
+      if (adminMsg.kind === 'clear-all') {
+        const store = await storeReady;
         await store.clearAll();
         ports.broadcastPanels({ kind: 'clear' });
         await ports.pushPopup(settings.monitoring);
+      } else if (adminMsg.kind === 'replay') {
+        const ctrl: ControlMsg = {
+          source: 'dappinsp-ctrl',
+          kind: 'replay',
+          method: adminMsg.method,
+          params: adminMsg.params,
+        };
+        chrome.tabs.sendMessage(adminMsg.tabId, ctrl).catch(() => { /* tab gone */ });
       }
       return;
     }
