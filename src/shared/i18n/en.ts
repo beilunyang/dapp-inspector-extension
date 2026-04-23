@@ -16,6 +16,17 @@ export const en = {
       errors: 'Errors', mocked: 'Mocked',
     },
     list: { method: 'Method', origin: 'Origin', status: 'Status', duration: 'Time', ts: 'When' },
+    copy: {
+      title: 'Copy as',
+      jsonRpc: 'JSON-RPC envelope',
+      jsonRpcHint: 'Paste into an RPC console or issue',
+      ethers: 'ethers.js snippet',
+      ethersHint: 'Node script to re-run against any RPC URL',
+      markdown: 'Markdown row',
+      markdownHint: 'For GitHub issues or notion docs',
+      copied: 'Copied',
+      copyFailed: 'Copy failed',
+    },
     replay: {
       title: 'Replay call',
       paramsLabel: 'Parameters (editable JSON)',

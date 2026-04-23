@@ -18,6 +18,17 @@ export const zh: I18nDict = {
       errors: '错误', mocked: '模拟',
     },
     list: { method: '方法', origin: '来源', status: '状态', duration: '耗时', ts: '时间' },
+    copy: {
+      title: '复制为',
+      jsonRpc: 'JSON-RPC envelope',
+      jsonRpcHint: '粘贴到 RPC 控制台或 Issue',
+      ethers: 'ethers.js 片段',
+      ethersHint: '在 Node 脚本中对任意 RPC URL 重新发起',
+      markdown: 'Markdown 表格行',
+      markdownHint: '贴到 GitHub Issue 或笔记中',
+      copied: '已复制',
+      copyFailed: '复制失败',
+    },
     replay: {
       title: '重放调用',
       paramsLabel: '参数(可编辑 JSON)',
