@@ -10,10 +10,9 @@ import {
   DEFAULT_MOCK_ERROR_MESSAGE,
   DEFAULT_MOCK_DELAY_MS,
   type MockRule,
-  type MockResponseType,
-  type MatchMode,
 } from '@shared/rules';
 import type { CapturedCall } from '@shared/types';
+import { MockRuleForm, validateMockRuleJson } from './MockRuleForm';
 
 export function MockDialog({
   call, onClose,
@@ -49,7 +48,7 @@ export function MockDialog({
     errorCode: DEFAULT_MOCK_ERROR_CODE,
     errorMessage: DEFAULT_MOCK_ERROR_MESSAGE,
   }));
-  const [jsonError, setJsonError] = useState<string | null>(null);
+  const jsonError = validateMockRuleJson(form);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -58,10 +57,7 @@ export function MockDialog({
   }, [onClose]);
 
   async function save() {
-    if (form.responseType === 'result') {
-      try { JSON.parse(form.responseBody); }
-      catch { setJsonError(t('panel.mock.invalidJson')); return; }
-    }
+    if (jsonError) return;
     await upsert(form);
     onClose();
   }
@@ -130,10 +126,7 @@ export function MockDialog({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="mono text-[12px] font-medium truncate">{r.method}</span>
-                      <span
-                        className="chip"
-                        style={{ color: 'rgb(var(--violet))', fontSize: 10 }}
-                      >
+                      <span className="chip" style={{ color: 'rgb(var(--violet))', fontSize: 10 }}>
                         {r.responseType.toUpperCase()}
                       </span>
                       {r.delayMs ? (
@@ -157,94 +150,7 @@ export function MockDialog({
           )}
 
           <SectionLabel>{t('panel.mock.newRule')}</SectionLabel>
-          <div className="grid gap-y-3 gap-x-4 mt-2" style={{ gridTemplateColumns: '120px 1fr' }}>
-            <Label>{t('panel.mock.method')}</Label>
-            <div className="flex gap-2 items-center">
-              <TextInput value={form.method} onChange={(v) => setForm({ ...form, method: v })} className="mono flex-1" />
-              <Segmented<MatchMode>
-                value={form.matchMode}
-                onChange={(v) => setForm({ ...form, matchMode: v })}
-                options={[
-                  { id: 'exact',  label: 'exact'  },
-                  { id: 'prefix', label: 'prefix' },
-                  { id: 'glob',   label: 'glob'   },
-                ]}
-              />
-            </div>
-
-            <Label>{t('panel.mock.origin')}</Label>
-            <TextInput value={form.origin} onChange={(v) => setForm({ ...form, origin: v })} className="mono w-full" placeholder="*" />
-
-            <Label>{t('panel.mock.responseType')}</Label>
-            <Segmented<MockResponseType>
-              value={form.responseType}
-              onChange={(v) => setForm({ ...form, responseType: v })}
-              options={[
-                { id: 'result', label: t('panel.mock.resultMode'), color: 'rgb(var(--green))' },
-                { id: 'error',  label: t('panel.mock.errorMode'),  color: 'rgb(var(--red))' },
-              ]}
-            />
-
-            {form.responseType === 'result' && (
-              <>
-                <Label>{t('panel.mock.responseBody')}</Label>
-                <div>
-                  <textarea
-                    value={form.responseBody}
-                    onChange={(e) => { setForm({ ...form, responseBody: e.target.value }); setJsonError(null); }}
-                    className="mono scroll"
-                    spellCheck={false}
-                    style={{
-                      width: '100%', minHeight: 140,
-                      padding: 10,
-                      background: 'rgb(var(--surface))',
-                      color: 'rgb(var(--fg))',
-                      border: `1px solid ${jsonError ? 'rgb(var(--red))' : 'rgb(var(--border))'}`,
-                      borderRadius: 6,
-                      fontSize: 12, lineHeight: 1.7,
-                      outline: 'none', resize: 'vertical',
-                    }}
-                  />
-                  <div className="text-[10.5px] mt-1" style={{ color: jsonError ? 'rgb(var(--red))' : 'rgb(var(--fg-dim))' }}>
-                    {jsonError ?? t('panel.mock.jsonHint')}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {form.responseType === 'error' && (
-              <>
-                <Label>{t('panel.mock.errorCode')}</Label>
-                <TextInput
-                  type="number"
-                  value={String(form.errorCode ?? DEFAULT_MOCK_ERROR_CODE)}
-                  onChange={(v) => setForm({ ...form, errorCode: Number(v) || 0 })}
-                  className="mono"
-                  style={{ width: 120 }}
-                />
-                <Label>{t('panel.mock.errorMessage')}</Label>
-                <TextInput
-                  value={form.errorMessage ?? DEFAULT_MOCK_ERROR_MESSAGE}
-                  onChange={(v) => setForm({ ...form, errorMessage: v })}
-                  className="mono w-full"
-                />
-              </>
-            )}
-
-            <Label>{t('panel.mock.delayMs')}</Label>
-            <div>
-              <TextInput
-                type="number"
-                value={String(form.delayMs ?? 0)}
-                onChange={(v) => setForm({ ...form, delayMs: Math.max(0, Number(v) || 0) })}
-                className="mono"
-                style={{ width: 120 }}
-              />
-              <div className="text-[10.5px] mt-1" style={{ color: 'rgb(var(--fg-dim))' }}>
-                {t('panel.mock.delayHint')}
-              </div>
-            </div>
-          </div>
+          <MockRuleForm rule={form} onChange={(patch) => setForm({ ...form, ...patch })} jsonError={jsonError} />
 
           <div
             className="flex gap-2 mt-4"
@@ -266,7 +172,7 @@ export function MockDialog({
           style={{ padding: '12px 18px', borderTop: '1px solid rgb(var(--border-soft))', background: 'rgb(var(--surface))' }}
         >
           <button className="btn ghost" onClick={onClose}>{t('panel.mock.cancel')}</button>
-          <button className="btn accent" onClick={() => void save()} disabled={!form.method.trim()}>
+          <button className="btn accent" onClick={() => void save()} disabled={!form.method.trim() || !!jsonError}>
             <Icon name="mock" size={12} /> {t('panel.mock.save')}
           </button>
         </div>
@@ -282,89 +188,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       style={{ fontSize: 10.5, fontWeight: 600, color: 'rgb(var(--fg-dim))', letterSpacing: 0.8 }}
     >
       {children}
-    </div>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[11.5px] pt-[7px]" style={{ color: 'rgb(var(--fg-muted))' }}>
-      {children}
-    </div>
-  );
-}
-
-function TextInput({
-  value, onChange, className = '', style, placeholder, type = 'text',
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  style?: React.CSSProperties;
-  placeholder?: string;
-  type?: 'text' | 'number';
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-      className={className}
-      style={{
-        height: 28,
-        padding: '0 10px',
-        fontSize: 12,
-        background: 'rgb(var(--surface))',
-        color: 'rgb(var(--fg))',
-        border: '1px solid rgb(var(--border))',
-        borderRadius: 6,
-        outline: 'none',
-        ...style,
-      }}
-    />
-  );
-}
-
-function Segmented<T extends string>({
-  value, onChange, options,
-}: {
-  value: T;
-  onChange: (v: T) => void;
-  options: { id: T; label: string; color?: string }[];
-}) {
-  return (
-    <div
-      className="inline-flex gap-[4px]"
-      style={{
-        padding: 2,
-        background: 'rgb(var(--surface))',
-        border: '1px solid rgb(var(--border))',
-        borderRadius: 6,
-        width: 'fit-content',
-      }}
-    >
-      {options.map(o => {
-        const active = o.id === value;
-        return (
-          <button
-            key={o.id}
-            onClick={() => onChange(o.id)}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 4,
-              fontSize: 11.5,
-              fontWeight: 500,
-              background: active ? (o.color ?? 'rgb(var(--accent))') : 'transparent',
-              color: active ? 'rgb(var(--accent-fg))' : 'rgb(var(--fg-muted))',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {o.label}
-          </button>
-        );
-      })}
     </div>
   );
 }

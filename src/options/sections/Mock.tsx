@@ -1,15 +1,23 @@
+import { useState } from 'react';
 import { useT } from '@shared/stores/i18n-store';
+import { useMockRulesStore } from '@shared/stores/mock-rules-store';
+import type { MockRule } from '@shared/rules';
 import { Icon } from '@shared/ui/Icon';
 import { PageTitle, MiniToggle } from '../primitives';
-
-const SAMPLE_RULES = [
-  { method: 'eth_chainId',    origin: 'localhost:3000',  enabled: true,  color: 'rgb(var(--amber))' },
-  { method: 'eth_accounts',   origin: 'polymarket.com',  enabled: true,  color: 'rgb(var(--fg-muted))' },
-  { method: 'personal_sign',  origin: '*',               enabled: false, color: 'rgb(var(--violet))' },
-];
+import { MockRuleEditDialog } from '../../panel/Detail/MockRuleForm';
 
 export function Mock() {
   const t = useT();
+  const rules = useMockRulesStore(s => s.rules);
+  const upsert = useMockRulesStore(s => s.upsert);
+  const remove = useMockRulesStore(s => s.remove);
+  const toggle = useMockRulesStore(s => s.toggle);
+
+  const [editing, setEditing] = useState<MockRule | null>(null);
+  const [showNew, setShowNew] = useState(false);
+
+  const activeCount = rules.filter(r => r.enabled).length;
+
   return (
     <div>
       <PageTitle title={t('options.nav.mock')} subtitle={t('options.mock.sub')} />
@@ -21,45 +29,130 @@ export function Mock() {
           background: 'rgb(var(--surface))',
           border: '1px solid rgb(var(--border-soft))',
           borderRadius: 6,
-          fontSize: 11.5,
+          fontSize: 12,
           color: 'rgb(var(--fg-muted))',
         }}
       >
-        <Icon name="mock" size={12} style={{ marginRight: 8, color: 'rgb(var(--violet))' }} />
-        {t('options.mock.locked')} · {t('options.mock.lockedHint')}
+        <Icon name="mock" size={13} style={{ marginRight: 8, color: 'rgb(var(--violet))' }} />
+        <span className="mono" style={{ color: 'rgb(var(--fg))' }}>
+          {t('options.mock.activeCount', { active: activeCount, total: rules.length })}
+        </span>
         <div className="flex-1" />
-        <button className="btn accent" disabled style={{ padding: '4px 10px' }}>
-          <Icon name="plus" size={12} /> {t('options.mock.new')}
+        <button
+          className="btn accent"
+          style={{ padding: '4px 10px' }}
+          onClick={() => setShowNew(true)}
+        >
+          <Icon name="plus" size={12} /> {t('options.mock.newRule')}
         </button>
       </div>
 
-      <div className="pointer-events-none select-none" style={{ opacity: 0.55 }}>
-        {SAMPLE_RULES.map((r, i) => (
+      {rules.length === 0 ? (
+        <div
+          className="text-center"
+          style={{
+            padding: '40px 20px',
+            background: 'rgb(var(--surface))',
+            border: '1px dashed rgb(var(--border))',
+            borderRadius: 6,
+            color: 'rgb(var(--fg-muted))',
+            fontSize: 12,
+          }}
+        >
+          {t('options.mock.empty')}
+        </div>
+      ) : (
+        <div
+          style={{
+            background: 'rgb(var(--surface))',
+            border: '1px solid rgb(var(--border-soft))',
+            borderRadius: 6,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Column header */}
           <div
-            key={i}
-            className="flex items-center gap-[10px] mb-[6px]"
+            className="flex items-center uppercase"
             style={{
-              padding: '10px 12px',
-              background: 'rgb(var(--surface))',
-              border: '1px solid rgb(var(--border-soft))',
-              borderRadius: 6,
+              height: 30, padding: '0 12px',
+              fontSize: 10.5, fontWeight: 600, letterSpacing: 0.8,
+              color: 'rgb(var(--fg-dim))',
+              borderBottom: '1px solid rgb(var(--border-soft))',
             }}
           >
-            <div style={{ width: 3, height: 20, background: r.color, borderRadius: 2 }} />
-            <div className="flex-1 min-w-0">
-              <div className="mono text-[12px]">{r.method}</div>
-              <div className="text-[10.5px]" style={{ color: 'rgb(var(--fg-dim))' }}>
-                on <span className="mono">{r.origin}</span>
+            <span style={{ width: 40 }}></span>
+            <span style={{ flex: 1.4 }}>{t('options.mock.columnMethod')}</span>
+            <span style={{ flex: 1 }}>{t('options.mock.columnOrigin')}</span>
+            <span style={{ width: 90 }}>{t('options.mock.columnResponse')}</span>
+            <span style={{ width: 70 }}>{t('options.mock.columnDelay')}</span>
+            <span style={{ width: 30 }}></span>
+          </div>
+
+          {rules.map((r, i) => (
+            <div
+              key={r.id}
+              className="flex items-center"
+              style={{
+                height: 44, padding: '0 12px',
+                fontSize: 12.5,
+                borderBottom: i < rules.length - 1 ? '1px solid rgb(var(--border-soft))' : 'none',
+                opacity: r.enabled ? 1 : 0.55,
+              }}
+            >
+              <div style={{ width: 40 }}>
+                <MiniToggle value={r.enabled} onChange={(v) => void toggle(r.id, v)} />
+              </div>
+              <div className="mono truncate" style={{ flex: 1.4, fontWeight: 500 }}>
+                {r.method || '—'}
+              </div>
+              <div className="mono truncate" style={{ flex: 1, fontSize: 11.5, color: 'rgb(var(--fg-muted))' }}>
+                {r.origin || '*'}
+              </div>
+              <div style={{ width: 90 }}>
+                <span
+                  className="chip"
+                  style={{
+                    fontSize: 10,
+                    color: r.responseType === 'error' ? 'rgb(var(--red))' : 'rgb(var(--violet))',
+                  }}
+                >
+                  {r.responseType.toUpperCase()}
+                </span>
+              </div>
+              <div
+                className="mono"
+                style={{ width: 70, fontSize: 11, color: 'rgb(var(--fg-muted))' }}
+              >
+                {r.delayMs ? `${r.delayMs}ms` : '—'}
+              </div>
+              <div style={{ width: 30, display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  className="btn icon ghost"
+                  onClick={() => setEditing(r)}
+                  aria-label="Edit rule"
+                >
+                  <Icon name="menu" size={13} style={{ color: 'rgb(var(--fg-dim))' }} />
+                </button>
               </div>
             </div>
-            <span className="chip" style={{ fontSize: 10 }}>MOCK</span>
-            <MiniToggle value={r.enabled} />
-            <button className="btn icon ghost" disabled>
-              <Icon name="dot3" size={12} />
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {showNew && (
+        <MockRuleEditDialog
+          onClose={() => setShowNew(false)}
+          onSave={async (r) => { await upsert(r); setShowNew(false); }}
+        />
+      )}
+      {editing && (
+        <MockRuleEditDialog
+          initial={editing}
+          onClose={() => setEditing(null)}
+          onSave={async (r) => { await upsert(r); setEditing(null); }}
+          onDelete={async (id) => { await remove(id); setEditing(null); }}
+        />
+      )}
     </div>
   );
 }
