@@ -147,8 +147,6 @@ export const zh: I18nDict = {
       accentHint: '用于选中态、高亮和吉祥物渐变。',
       monByDefault: '默认开启监控',
       monByDefaultDesc: '打开 DApp 标签页时自动开始记录。',
-      badge: '工具栏徽标',
-      badgeDesc: '在扩展图标上显示未读调用数。',
       shortcut: '打开面板快捷键',
       shortcutDesc: '通过键盘直接唤起检查器的全局快捷键。',
       lang: '语言',
