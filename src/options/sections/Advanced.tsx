@@ -3,28 +3,11 @@ import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { DEFAULT_SETTINGS } from '@shared/settings';
 import type { AdminMsg } from '@shared/messages';
-import { Icon } from '@shared/ui/Icon';
 import { PageTitle, SectionTitle, Row, MiniToggle } from '../primitives';
-
-const EXPORT_FORMATS = [
-  { id: 'har',  label: 'HAR',      descKey: 'advanced.exp.harDesc' },
-  { id: 'json', label: 'JSON-RPC', descKey: 'advanced.exp.jsonDesc' },
-  { id: 'curl', label: 'cURL',     descKey: 'advanced.exp.curlDesc' },
-] as const;
-
-type FormatId = typeof EXPORT_FORMATS[number]['id'];
-
-const FORMAT_DESC: Record<FormatId, { en: string; zh: string }> = {
-  har:  { en: 'Chrome DevTools native',  zh: 'Chrome DevTools 原生' },
-  json: { en: 'Structured batch',        zh: '结构化批量' },
-  curl: { en: 'CLI replay',              zh: '命令行重放' },
-};
 
 export function Advanced() {
   const t = useT();
-  const lang = useSettingsStore(s => s.lang);
   const update = useSettingsStore(s => s.update);
-  const [fmt, setFmt] = useState<FormatId>('har');
   const [clearText, setClearText] = useState('');
 
   return (
@@ -36,45 +19,6 @@ export function Advanced() {
         desc={t('options.advanced.devLogsDesc')}
         control={<MiniToggle value={false} />}
       />
-
-      {/* Export format — segmented cards */}
-      <SectionTitle>{t('options.advanced.export')}</SectionTitle>
-      <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {EXPORT_FORMATS.map(f => {
-          const isActive = fmt === f.id;
-          return (
-            <div
-              key={f.id}
-              onClick={() => setFmt(f.id)}
-              className="cursor-pointer"
-              style={{
-                padding: '10px 12px',
-                borderRadius: 7,
-                background: isActive
-                  ? 'color-mix(in oklab, rgb(var(--accent)) 10%, rgb(var(--surface)))'
-                  : 'rgb(var(--surface))',
-                border: isActive ? '1.5px solid rgb(var(--accent))' : '1.5px solid rgb(var(--border-soft))',
-              }}
-            >
-              <div className="flex items-center gap-[6px]">
-                {isActive && <Icon name="check" size={11} style={{ color: 'rgb(var(--accent))' }} />}
-                <span className="text-[12.5px] font-semibold">{f.label}</span>
-              </div>
-              <div className="text-[10.5px] mt-[3px]" style={{ color: 'rgb(var(--fg-muted))' }}>
-                {FORMAT_DESC[f.id][lang]}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex gap-2 mb-5">
-        <button className="btn" disabled>
-          <Icon name="download" size={12} /> {t('options.advanced.exportSession')}
-        </button>
-        <button className="btn ghost" disabled>
-          <Icon name="link" size={12} /> {t('options.advanced.copy')}
-        </button>
-      </div>
 
       {/* Diagnostics grid */}
       <SectionTitle>{t('options.advanced.diagnostics')}</SectionTitle>
