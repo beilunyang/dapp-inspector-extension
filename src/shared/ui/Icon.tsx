@@ -31,6 +31,7 @@ const PATHS: Record<string, string> = {
   sync: 'M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0113.6-5.7L20 7M20 14a8 8 0 01-13.6 5.7L4 17',
   tx: 'M3 8h13l-4-4M21 16H8l4 4',
   warn: 'M12 3L2 21h20L12 3zM12 10v5M12 17v0.5',
+  clock: 'M12 21a9 9 0 100-18 9 9 0 000 18z M12 7v5l3 3',
 };
 
 export function Icon({ name, size = 16, className = '', style }: { name: keyof typeof PATHS | string; size?: number; className?: string; style?: React.CSSProperties }) {
