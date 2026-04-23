@@ -3,7 +3,7 @@ import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { DEFAULT_SETTINGS } from '@shared/settings';
 import type { AdminMsg } from '@shared/messages';
-import { PageTitle, SectionTitle, Row, MiniToggle } from '../primitives';
+import { PageTitle, SectionTitle, Row } from '../primitives';
 
 export function Advanced() {
   const t = useT();
@@ -13,12 +13,6 @@ export function Advanced() {
   return (
     <div>
       <PageTitle title={t('options.nav.advanced')} subtitle={t('options.advanced.sub')} />
-
-      <Row
-        title={t('options.advanced.devLogs')}
-        desc={t('options.advanced.devLogsDesc')}
-        control={<MiniToggle value={false} />}
-      />
 
       {/* Diagnostics grid */}
       <SectionTitle>{t('options.advanced.diagnostics')}</SectionTitle>

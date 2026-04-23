@@ -192,8 +192,6 @@ export const en = {
     },
     advanced: {
       sub: 'Developer-facing options',
-      devLogs: 'Verbose logs',
-      devLogsDesc: 'Dump injected/content bridge events to the console.',
       diagnostics: 'Diagnostics',
       version: 'Version',
       engine: 'Engine',
