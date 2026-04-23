@@ -6,7 +6,7 @@ import { Icon } from '@shared/ui/Icon';
 import type { Kind } from '@shared/types';
 
 interface ChipDef {
-  id: Kind | 'all' | 'errors';
+  id: Kind | 'all' | 'errors' | 'mocked';
   labelKey: string;
   color?: string;
 }
@@ -17,6 +17,7 @@ const CHIPS: ChipDef[] = [
   { id: 'write', labelKey: 'panel.filters.write', color: 'rgb(var(--amber))' },
   { id: 'sign', labelKey: 'panel.filters.sign', color: 'rgb(var(--violet))' },
   { id: 'errors', labelKey: 'panel.filters.errors', color: 'rgb(var(--red))' },
+  { id: 'mocked', labelKey: 'panel.filters.mocked', color: 'rgb(var(--violet))' },
 ];
 
 export function FilterBar() {
@@ -25,17 +26,23 @@ export function FilterBar() {
   const provenance = useCapturesStore(s => s.provenance);
   const kinds = useViewStore(s => s.kinds);
   const toggleKind = useViewStore(s => s.toggleKind);
+  const errorsOnly = useViewStore(s => s.errorsOnly);
+  const mockedOnly = useViewStore(s => s.mockedOnly);
+  const toggleErrorsOnly = useViewStore(s => s.toggleErrorsOnly);
+  const toggleMockedOnly = useViewStore(s => s.toggleMockedOnly);
+  const resetChips = useViewStore(s => s.resetChips);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: calls.length, read: 0, write: 0, sign: 0, subscribe: 0, errors: 0 };
+    const c: Record<string, number> = { all: calls.length, read: 0, write: 0, sign: 0, subscribe: 0, errors: 0, mocked: 0 };
     for (const call of calls) {
       c[call.kind] = (c[call.kind] ?? 0) + 1;
       if (call.status === 'error') c.errors++;
+      if (call.mocked) c.mocked++;
     }
     return c;
   }, [calls]);
 
-  const allActive = kinds.size === 0;
+  const allActive = kinds.size === 0 && !errorsOnly && !mockedOnly;
 
   return (
     <div
@@ -45,18 +52,17 @@ export function FilterBar() {
       {CHIPS.map(c => {
         const isActive =
           c.id === 'all' ? allActive :
-          c.id === 'errors' ? false :
+          c.id === 'errors' ? errorsOnly :
+          c.id === 'mocked' ? mockedOnly :
           kinds.has(c.id as Kind);
         return (
           <button
             key={c.id}
             onClick={() => {
-              if (c.id === 'all') {
-                // Clear kind filters
-                kinds.forEach(k => toggleKind(k));
-              } else if (c.id !== 'errors') {
-                toggleKind(c.id as Kind);
-              }
+              if (c.id === 'all') resetChips();
+              else if (c.id === 'errors') toggleErrorsOnly();
+              else if (c.id === 'mocked') toggleMockedOnly();
+              else toggleKind(c.id as Kind);
             }}
             className="inline-flex items-center gap-[6px] cursor-pointer"
             style={{
