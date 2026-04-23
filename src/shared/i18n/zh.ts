@@ -204,6 +204,7 @@ export const zh: I18nDict = {
     },
     about: {
       tagline: '检查与调试 Web3 RPC 通信',
+      scope: '当前支持 EVM 链 · 更多链陆续加入',
       version: '版本',
       links: '资源',
       changelog: '更新日志',

@@ -202,6 +202,7 @@ export const en = {
     },
     about: {
       tagline: 'Inspect and debug Web3 RPC traffic',
+      scope: 'Currently supports EVM chains · more to come',
       version: 'Version',
       links: 'Resources',
       changelog: 'Changelog',

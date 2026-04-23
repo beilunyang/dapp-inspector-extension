@@ -15,8 +15,11 @@ export function About() {
         <Mascot size={64} mood="happy" />
         <div className="flex-1 min-w-0">
           <div className="text-[18px] font-semibold">DApp Inspector</div>
-          <div className="text-[12px] mb-[6px]" style={{ color: 'rgb(var(--fg-muted))' }}>
+          <div className="text-[12px]" style={{ color: 'rgb(var(--fg-muted))' }}>
             {t('options.about.tagline')}
+          </div>
+          <div className="text-[11px] mb-[6px]" style={{ color: 'rgb(var(--fg-dim))' }}>
+            {t('options.about.scope')}
           </div>
           <div
             className="mono text-[11px] inline-flex items-center gap-[5px]"
