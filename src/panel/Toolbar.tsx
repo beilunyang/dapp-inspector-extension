@@ -31,9 +31,6 @@ export function Toolbar({ onClear }: { onClear: () => void }) {
       <button className="btn icon ghost" title={t('panel.toolbar.clear')} onClick={onClear}>
         <Icon name="clear" size={14} />
       </button>
-      <button className="btn icon ghost" title={t('panel.toolbar.export')} disabled>
-        <Icon name="download" size={14} />
-      </button>
       <div style={{ width: 1, height: 18, background: 'rgb(var(--border))', margin: '0 4px' }} />
 
       <div
