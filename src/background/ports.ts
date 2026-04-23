@@ -8,8 +8,13 @@ interface PopupClient { tabId: number | null; port: chrome.runtime.Port }
  * Registers the onConnect listener synchronously so the port opens during SW
  * boot / wake-up are not lost. All store-dependent work awaits `storeReady`
  * inside the callbacks.
+ *
+ * `monitoringRef` lets the hub read the current monitoring flag without
+ * creating a cyclic import with background/index.ts.
  */
-export function createPortHub(storeReady: Promise<BgStore>) {
+export function createPortHub(storeReady: Promise<BgStore>, monitoringRef?: () => boolean) {
+  const currentMonitoring = () => (monitoringRef ? monitoringRef() : true);
+
   const panels: PanelClient[] = [];
   const popups: PopupClient[] = [];
 
@@ -66,7 +71,21 @@ export function createPortHub(storeReady: Promise<BgStore>) {
       const client: PopupClient = { tabId: null, port };
       popups.push(client);
       port.onMessage.addListener(async (req: PopupReq) => {
-        if (req.kind === 'subscribe') client.tabId = req.tabId;
+        if (req.kind === 'subscribe') {
+          client.tabId = req.tabId;
+          // Send initial status snapshot so the popup doesn't wait for the
+          // next call before it learns about an already-active tab.
+          const store = await storeReady;
+          const snap = await store.snapshot(req.tabId);
+          try {
+            port.postMessage({
+              kind: 'status',
+              provenance: snap.provenance,
+              recent: snap.calls.slice(0, 5),
+              monitoring: currentMonitoring(),
+            } as PopupPush);
+          } catch { /* port closed */ }
+        }
       });
       port.onDisconnect.addListener(() => removeClient(popups as unknown as { port: chrome.runtime.Port }[], port));
     }

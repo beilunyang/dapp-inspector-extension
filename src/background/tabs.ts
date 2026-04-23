@@ -11,9 +11,10 @@ export function createTabTracker(store: BgStore) {
   }
 
   return {
-    async onCallStart(tabId: number, call: CapturedCall): Promise<TabProvenance> {
-      const prov = await getOrInit(tabId, { origin: call.origin });
+    async onCallStart(tabId: number, call: CapturedCall, url?: string): Promise<TabProvenance> {
+      const prov = await getOrInit(tabId, { origin: call.origin, url });
       prov.hasDapp = true;
+      if (url) prov.url = url;
       if (call.providerInfo && !prov.wallets.some(w => w.rdns === call.providerInfo.rdns && w.name === call.providerInfo.name)) {
         prov.wallets.push(call.providerInfo);
       }
@@ -34,9 +35,10 @@ export function createTabTracker(store: BgStore) {
       }
       return null;
     },
-    async onProvider(tabId: number, info: ProviderInfo, origin: string): Promise<TabProvenance> {
-      const prov = await getOrInit(tabId, { origin });
+    async onProvider(tabId: number, info: ProviderInfo, origin: string, url?: string): Promise<TabProvenance> {
+      const prov = await getOrInit(tabId, { origin, url });
       prov.hasDapp = true;
+      if (url) prov.url = url;
       if (!prov.wallets.some(w => w.rdns === info.rdns && w.name === info.name)) {
         prov.wallets.push(info);
       }
