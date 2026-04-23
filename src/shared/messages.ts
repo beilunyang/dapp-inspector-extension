@@ -7,6 +7,10 @@ export interface CallStart {
   params: unknown;
   providerInfo: ProviderInfo;
   startedAt: number;
+  // Page-reported origin (window.location.origin). Authoritative — the
+  // background prefers this over sender.tab.url because the tab URL can
+  // lag during navigation (e.g. still "chrome://newtab/" at document_start).
+  origin: string;
 }
 export interface CallEnd {
   id: string;
@@ -27,7 +31,7 @@ export type PageMsg =
   | { source: 'dappinsp'; kind: 'call:start'; payload: CallStart }
   | { source: 'dappinsp'; kind: 'call:end';   payload: CallEnd }
   | { source: 'dappinsp'; kind: 'call:error'; payload: CallError }
-  | { source: 'dappinsp'; kind: 'provider';   payload: ProviderInfo }
+  | { source: 'dappinsp'; kind: 'provider';   payload: ProviderInfo; origin: string }
   | { source: 'dappinsp'; kind: 'chain';      payload: { chainId: string } };
 
 export type ControlMsg =

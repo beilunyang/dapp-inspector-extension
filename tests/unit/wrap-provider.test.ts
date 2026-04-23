@@ -40,7 +40,12 @@ describe('wrapProvider', () => {
   it('emits provider info on wrap', () => {
     const provider = { request: vi.fn() };
     wrapProvider(provider as any, info, emit);
-    expect(emit).toHaveBeenCalledWith({ source: 'dappinsp', kind: 'provider', payload: info });
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'dappinsp', kind: 'provider', payload: info }),
+    );
+    // And it tags the emitted envelope with the page origin.
+    const providerCall = emit.mock.calls.find(c => c[0].kind === 'provider');
+    expect(typeof providerCall?.[0].origin).toBe('string');
   });
 });
 
@@ -49,7 +54,7 @@ describe('createEmitter', () => {
     const post = vi.fn();
     (globalThis as any).window = { postMessage: post };
     const emit = createEmitter();
-    emit({ source: 'dappinsp', kind: 'provider', payload: info });
+    emit({ source: 'dappinsp', kind: 'provider', payload: info, origin: 'https://example.com' });
     expect(post).toHaveBeenCalled();
   });
 });

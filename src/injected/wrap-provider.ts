@@ -40,6 +40,10 @@ export function createEmitter(): EmitFn {
   };
 }
 
+function pageOrigin(): string {
+  return (globalThis as { location?: Location }).location?.origin ?? '';
+}
+
 export function wrapProvider(
   provider: EIP1193Provider,
   info: ProviderInfo,
@@ -50,7 +54,7 @@ export function wrapProvider(
   if (WRAPPED.has(provider)) return;
   WRAPPED.add(provider);
 
-  try { emit({ source: 'dappinsp', kind: 'provider', payload: info }); } catch {}
+  try { emit({ source: 'dappinsp', kind: 'provider', payload: info, origin: pageOrigin() }); } catch {}
 
   const original = provider.request.bind(provider);
   provider.request = async function wrappedRequest(args) {
@@ -61,7 +65,7 @@ export function wrapProvider(
     try {
       emit({
         source: 'dappinsp', kind: 'call:start',
-        payload: { id, method, params: safeClone(args?.params), providerInfo: info, startedAt },
+        payload: { id, method, params: safeClone(args?.params), providerInfo: info, startedAt, origin: pageOrigin() },
       });
     } catch {}
     void classify; // referenced to avoid unused import under some tsconfigs
