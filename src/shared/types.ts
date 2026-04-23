@@ -24,6 +24,8 @@ export interface CapturedCall {
   error?: { code: number; message: string; data?: unknown };
   chainId?: string;
   truncated?: boolean;
+  /** True when the result/error came from a Mock rule rather than the real provider. */
+  mocked?: boolean;
 }
 
 export interface TabProvenance {

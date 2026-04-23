@@ -142,7 +142,22 @@ function Row({ call, selected, onClick, offset }: {
       >
         {call.method}
       </span>
-      {call.status !== 'ok' && (
+      {call.mocked && (
+        <span
+          className="mono"
+          style={{
+            fontSize: 9.5, fontWeight: 600,
+            padding: '1px 5px', borderRadius: 3,
+            color: 'rgb(var(--violet))',
+            background: 'color-mix(in oklab, rgb(var(--violet)) 14%, transparent)',
+            letterSpacing: 0.4,
+          }}
+          title="Mocked response"
+        >
+          MOCK
+        </span>
+      )}
+      {call.status !== 'ok' && !call.mocked && (
         <span className="dot" style={{ color: statusColor }} />
       )}
       <span

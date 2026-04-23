@@ -4,6 +4,7 @@ import type { CapturedCall, CallStatus } from '@shared/types';
 import { useT } from '@shared/stores/i18n-store';
 import { ReplayDialog } from './ReplayDialog';
 import { BlockDialog } from './BlockDialog';
+import { MockDialog } from './MockDialog';
 
 const STATUS_COLOR: Record<CallStatus | 'mocked', string> = {
   ok:      'rgb(var(--green))',
@@ -17,6 +18,7 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
   const host = safeHost(call.origin);
   const [showReplay, setShowReplay] = useState(false);
   const [showBlock, setShowBlock] = useState(false);
+  const [showMock, setShowMock] = useState(false);
   return (
     <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid rgb(var(--border-soft))' }}>
       <div className="flex items-center gap-[10px] mb-[10px]">
@@ -26,7 +28,7 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
         >
           {call.method}
         </span>
-        <StatusBadge status={call.status} />
+        <StatusBadge status={call.status} mocked={call.mocked} />
         <div className="flex-1" />
         <button
           className="btn ghost"
@@ -36,7 +38,14 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
         >
           <Icon name="replay" size={12} /> {t('panel.detail.replay')}
         </button>
-        <DisabledBtn icon="mock" label={t('panel.detail.mock')} />
+        <button
+          className="btn ghost"
+          style={{ fontSize: 12 }}
+          onClick={() => setShowMock(true)}
+          title={t('panel.detail.mock')}
+        >
+          <Icon name="mock" size={12} /> {t('panel.detail.mock')}
+        </button>
         <button
           className="btn ghost"
           style={{ fontSize: 12 }}
@@ -54,6 +63,9 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
       )}
       {showBlock && (
         <BlockDialog call={call} onClose={() => setShowBlock(false)} />
+      )}
+      {showMock && (
+        <MockDialog call={call} onClose={() => setShowMock(false)} />
       )}
       <div
         className="flex items-center flex-wrap"
@@ -89,9 +101,12 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
   );
 }
 
-function StatusBadge({ status }: { status: CallStatus }) {
-  const color = STATUS_COLOR[status] ?? STATUS_COLOR.ok;
-  const label = status.toUpperCase();
+function StatusBadge({ status, mocked }: { status: CallStatus; mocked?: boolean }) {
+  // Mocked results/errors use the violet "MOCKED" tint to distinguish them
+  // from real provider activity at a glance.
+  const key = mocked ? 'mocked' : status;
+  const color = STATUS_COLOR[key] ?? STATUS_COLOR.ok;
+  const label = mocked ? 'MOCKED' : status.toUpperCase();
   return (
     <span
       className="mono inline-flex items-center gap-[5px]"
@@ -109,20 +124,6 @@ function StatusBadge({ status }: { status: CallStatus }) {
       <span className="dot" style={{ width: 5, height: 5, color }} />
       {label}
     </span>
-  );
-}
-
-function DisabledBtn({ icon, label }: { icon: string; label: string }) {
-  const t = useT();
-  return (
-    <button
-      className="btn ghost"
-      disabled
-      title={t('panel.detail.disabledHint')}
-      style={{ fontSize: 12 }}
-    >
-      <Icon name={icon} size={12} /> {label}
-    </button>
   );
 }
 

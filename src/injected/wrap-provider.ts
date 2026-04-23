@@ -26,6 +26,13 @@ export type PreRequestAction =
 
 export type PreRequestHook = (ctx: RequestContext) => Promise<PreRequestAction> | PreRequestAction;
 
+export type MockAction =
+  | { kind: 'pass' }
+  | { kind: 'mock-result'; result: unknown; delayMs?: number }
+  | { kind: 'mock-error'; error: { code: number; message: string; data?: unknown }; delayMs?: number };
+
+export type MockRequestHook = (ctx: RequestContext) => Promise<MockAction> | MockAction;
+
 export function createEmitter(): EmitFn {
   return (msg) => {
     try { (globalThis as { window?: Window }).window?.postMessage(msg, '*'); }
@@ -38,6 +45,7 @@ export function wrapProvider(
   info: ProviderInfo,
   emit: EmitFn,
   preRequest?: PreRequestHook,
+  mockRequest?: MockRequestHook,
 ): void {
   if (WRAPPED.has(provider)) return;
   WRAPPED.add(provider);
@@ -83,6 +91,61 @@ export function wrapProvider(
       }
       if (action.kind === 'delay' && action.ms > 0) {
         await new Promise<void>(r => setTimeout(r, action.ms));
+      }
+    }
+
+    // Mock-request hook runs AFTER pre-request (so throttle delay applies
+    // first). On match, short-circuit the real provider and emit a synthetic
+    // call:end or call:error tagged with `mocked: true`.
+    if (mockRequest) {
+      let mockAction: MockAction = { kind: 'pass' };
+      try {
+        mockAction = await mockRequest({
+          method,
+          params: args?.params,
+          origin: (globalThis as { location?: Location }).location?.origin ?? '',
+        });
+      } catch { /* fall through to real call */ }
+
+      if (mockAction.kind === 'mock-result') {
+        if (mockAction.delayMs && mockAction.delayMs > 0) {
+          await new Promise<void>(r => setTimeout(r, mockAction.delayMs));
+        }
+        const endedAt = Date.now();
+        try {
+          emit({
+            source: 'dappinsp', kind: 'call:end',
+            payload: {
+              id, endedAt,
+              durationMs: performance.now() - startPerf,
+              result: safeClone(mockAction.result),
+              mocked: true,
+            },
+          });
+        } catch {}
+        return mockAction.result;
+      }
+      if (mockAction.kind === 'mock-error') {
+        if (mockAction.delayMs && mockAction.delayMs > 0) {
+          await new Promise<void>(r => setTimeout(r, mockAction.delayMs));
+        }
+        const endedAt = Date.now();
+        try {
+          emit({
+            source: 'dappinsp', kind: 'call:error',
+            payload: {
+              id, endedAt,
+              durationMs: performance.now() - startPerf,
+              error: mockAction.error,
+              mocked: true,
+            },
+          });
+        } catch {}
+        const err: Error & { code?: number; data?: unknown } = Object.assign(
+          new Error(mockAction.error.message),
+          { code: mockAction.error.code, data: mockAction.error.data },
+        );
+        throw err;
       }
     }
 

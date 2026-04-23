@@ -3,7 +3,9 @@ import {
   methodMatches,
   originMatches,
   findMatchingBlockRule,
+  findMatchingMockRule,
   type BlockRule,
+  type MockRule,
 } from '@shared/rules';
 
 describe('methodMatches', () => {
@@ -72,5 +74,36 @@ describe('findMatchingBlockRule', () => {
 
   it('returns undefined when nothing matches', () => {
     expect(findMatchingBlockRule([base({ method: 'foo' })], 'bar', 'https://x')).toBeUndefined();
+  });
+});
+
+describe('findMatchingMockRule', () => {
+  const mk = (over: Partial<MockRule> = {}): MockRule => ({
+    id: 'm1', enabled: true,
+    method: 'eth_chainId', matchMode: 'exact',
+    origin: '*',
+    responseType: 'result', responseBody: '"0x89"',
+    ...over,
+  });
+
+  it('returns the first enabled match', () => {
+    const rules: MockRule[] = [
+      mk({ id: 'disabled', enabled: false }),
+      mk({ id: 'match' }),
+      mk({ id: 'later' }),
+    ];
+    expect(findMatchingMockRule(rules, 'eth_chainId', 'https://x')?.id).toBe('match');
+  });
+
+  it('skips non-matching origin', () => {
+    const rules: MockRule[] = [
+      mk({ id: 'a', origin: 'uniswap.org' }),
+    ];
+    expect(findMatchingMockRule(rules, 'eth_chainId', 'https://polymarket.com')).toBeUndefined();
+  });
+
+  it('skips non-matching method', () => {
+    const rules: MockRule[] = [mk({ method: 'eth_call' })];
+    expect(findMatchingMockRule(rules, 'eth_chainId', 'https://x')).toBeUndefined();
   });
 });
