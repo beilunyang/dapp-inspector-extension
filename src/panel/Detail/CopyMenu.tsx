@@ -4,15 +4,13 @@ import { useT } from '@shared/stores/i18n-store';
 import type { CapturedCall } from '@shared/types';
 import {
   toJsonRpcEnvelope,
-  toEthersSnippet,
   toMarkdownRow,
 } from '@shared/call-export';
 
-type Format = 'jsonRpc' | 'ethers' | 'markdown';
+type Format = 'jsonRpc' | 'markdown';
 
 const SERIALIZERS: Record<Format, (c: CapturedCall) => string> = {
   jsonRpc:  toJsonRpcEnvelope,
-  ethers:   toEthersSnippet,
   markdown: toMarkdownRow,
 };
 
@@ -89,13 +87,6 @@ export function CopyMenu({
         hint={t('panel.copy.jsonRpcHint')}
         state={stateFor('jsonRpc', justCopied, failed, t)}
         onClick={() => void copy('jsonRpc')}
-      />
-      <MenuItem
-        icon="bolt"
-        label={t('panel.copy.ethers')}
-        hint={t('panel.copy.ethersHint')}
-        state={stateFor('ethers', justCopied, failed, t)}
-        onClick={() => void copy('ethers')}
       />
       <MenuItem
         icon="link"
