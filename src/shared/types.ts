@@ -30,6 +30,8 @@ export interface CapturedCall {
   blocked?: boolean;
   /** True when the call was dispatched by a user-triggered Replay. */
   replayed?: boolean;
+  /** Milliseconds of artificial delay injected by a Throttle rule before the real request. */
+  throttleMs?: number;
 }
 
 export interface TabProvenance {

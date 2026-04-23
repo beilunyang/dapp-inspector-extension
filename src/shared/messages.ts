@@ -19,6 +19,7 @@ export interface CallEnd {
   durationMs: number;
   result: unknown;
   mocked?: boolean;
+  throttleMs?: number;
 }
 export interface CallError {
   id: string;
@@ -27,6 +28,7 @@ export interface CallError {
   error: { code: number; message: string; data?: unknown };
   mocked?: boolean;
   blocked?: boolean;
+  throttleMs?: number;
 }
 
 export type PageMsg =

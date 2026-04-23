@@ -87,6 +87,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
         durationMs: pageMsg.payload.durationMs, result: pageMsg.payload.result,
       };
       if (pageMsg.payload.mocked) patch.mocked = true;
+      if (pageMsg.payload.throttleMs) patch.throttleMs = pageMsg.payload.throttleMs;
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       const updated = await store.patch(pageMsg.payload.id, patch);
       if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
@@ -100,6 +101,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       };
       if (pageMsg.payload.mocked) patch.mocked = true;
       if (pageMsg.payload.blocked) patch.blocked = true;
+      if (pageMsg.payload.throttleMs) patch.throttleMs = pageMsg.payload.throttleMs;
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await store.patch(pageMsg.payload.id, patch);
       await ports.pushPopup(settings.monitoring);
