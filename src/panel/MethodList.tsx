@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCapturesStore } from './stores/captures-store';
 import { useViewStore } from './stores/view-store';
 import { useT } from '@shared/stores/i18n-store';
+import { Icon } from '@shared/ui/Icon';
 import type { CapturedCall, Kind } from '@shared/types';
 
 const ROW_HEIGHT = 28;
@@ -84,6 +85,7 @@ export function MethodList() {
                 selected={c.id === selectedId}
                 onClick={() => select(c.id)}
                 offset={v.start}
+                t={t}
               />
             );
           })}
@@ -93,11 +95,12 @@ export function MethodList() {
   );
 }
 
-function Row({ call, selected, onClick, offset }: {
+function Row({ call, selected, onClick, offset, t }: {
   call: CapturedCall;
   selected: boolean;
   onClick: () => void;
   offset: number;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const kc = KIND_STYLE[call.kind];
   const statusColor = STATUS_COLOR[call.status] ?? STATUS_COLOR.ok;
@@ -151,6 +154,15 @@ function Row({ call, selected, onClick, offset }: {
       {call.mocked && <Tag color="rgb(var(--violet))" label="MOCK" title="Mocked response" />}
       {call.status !== 'ok' && !call.mocked && !call.blocked && (
         <span className="dot" style={{ color: statusColor }} />
+      )}
+      {call.throttleMs != null && call.throttleMs > 0 && (
+        <span
+          className="inline-flex items-center"
+          style={{ color: 'rgb(var(--amber))' }}
+          title={t('panel.list.throttleHint', { n: call.throttleMs })}
+        >
+          <Icon name="clock" size={11} />
+        </span>
       )}
       <span
         className="mono"
