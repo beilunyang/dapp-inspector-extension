@@ -95,8 +95,12 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
             <Icon name="cpu" size={12} /> Chain <span className="mono">{call.chainId}</span>
           </span>
         )}
-        <span className="inline-flex items-center gap-[5px] mono">
-          {new Date(call.startedAt).toISOString().slice(11, 19)}
+        <span
+          className="inline-flex items-center gap-[5px] mono"
+          title={new Date(call.startedAt).toISOString()}
+        >
+          <Icon name="clock" size={12} />
+          {fmtLocalTs(call.startedAt)}
         </span>
         {call.durationMs != null && (
           <span className="inline-flex items-center gap-[5px]">
@@ -141,4 +145,16 @@ function StatusBadge({ status, mocked }: { status: CallStatus; mocked?: boolean 
 
 function safeHost(url: string): string {
   try { return new URL(url).host; } catch { return url; }
+}
+
+function fmtLocalTs(ts: number): string {
+  // Local-timezone YYYY-MM-DD HH:mm:ss.SSS. The title attr above
+  // carries the UTC ISO string for cross-reference on hover.
+  const d = new Date(ts);
+  const p2 = (n: number) => String(n).padStart(2, '0');
+  const p3 = (n: number) => String(n).padStart(3, '0');
+  return (
+    `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ` +
+    `${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}.${p3(d.getMilliseconds())}`
+  );
 }
