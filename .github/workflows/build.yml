@@ -1,0 +1,71 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed by action-gh-release on tag pushes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test:run
+
+      - name: Build
+        run: pnpm build
+
+      - name: Read version
+        id: ver
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Package extension zip
+        run: |
+          cd dist
+          zip -rq "../dapp-inspector-${{ steps.ver.outputs.version }}.zip" .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dapp-inspector-${{ steps.ver.outputs.version }}-${{ github.sha }}
+          path: dapp-inspector-*.zip
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dapp-inspector-*.zip
+          generate_release_notes: true
+          body: |
+            Chrome extension package for DApp Inspector ${{ github.ref_name }}.
+            See CHANGELOG in `src/shared/changelog.ts` or the About section of the extension for release notes.
