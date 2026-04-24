@@ -114,7 +114,28 @@ React 18 · Zustand · Tailwind · TypeScript · Vite · `@crxjs/vite-plugin` (M
 
 ## 截图
 
-参见上方 [Screenshots](#screenshots)。
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/panel-zh.png" alt="DevTools 面板" width="100%" />
+      <sub>DevTools 面板 — 捕获列表、过滤栏、详情窗格</sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/detail-zh.png" alt="调用详情" width="100%" />
+      <sub>调用详情 — 参数、返回值、耗时分解、重放 / 模拟 / 拦截</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/options-zh.png" alt="选项 / 规则" width="100%" />
+      <sub>选项页 — 模拟 / 阻断 &amp; 限速规则管理</sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/popup-zh.png" alt="弹窗" width="100%" />
+      <sub>弹窗 — 快捷状态、开关监控</sub>
+    </td>
+  </tr>
+</table>
 
 ## 功能
 
