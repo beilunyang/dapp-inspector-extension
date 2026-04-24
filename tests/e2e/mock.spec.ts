@@ -106,7 +106,9 @@ test('mock rule marks the captured call as MOCKED in the inspector', async () =>
   await inspector.goto(`chrome-extension://${sw.url().split('/')[2]}/src/inspector/inspector.html?tabId=${tabId}`);
   const row = inspector.locator('[role=listitem]').filter({ hasText: 'eth_chainId' }).first();
   await row.waitFor({ state: 'visible', timeout: 5000 });
-  await expect(row).toContainText('MOCK');
+  // The row marks a mocked call with a single-letter "M" tag whose tooltip is
+  // "Mocked response"; assert that badge is present rather than the literal word.
+  await expect(row.locator('[title="Mocked response"]')).toBeVisible();
 
   await ctx.close();
 });

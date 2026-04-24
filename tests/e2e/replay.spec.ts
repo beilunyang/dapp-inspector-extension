@@ -34,8 +34,9 @@ test('replay re-fires a captured call and appears as a new entry', async () => {
   await firstRow.waitFor({ state: 'visible', timeout: 5000 });
   await firstRow.click();
 
-  // Click Replay button in the detail header
-  await inspector.getByRole('button', { name: /Replay/i }).click();
+  // Click Replay button in the detail header. Use exact match so we don't
+  // also resolve the "Replayed" filter chip in the FilterBar.
+  await inspector.getByRole('button', { name: 'Replay', exact: true }).click();
 
   // Dialog visible; submit without edit
   await expect(inspector.getByText(/Replay call/i)).toBeVisible();
