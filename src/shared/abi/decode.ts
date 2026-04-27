@@ -40,12 +40,17 @@ export function extractTxContext(call: CapturedCall): TxContext | null {
 }
 
 /** Decode `data` against an ABI, tagging the result with its source. Returns
- *  null when the selector isn't in the ABI or viem can't decode the args. */
+ *  null when the selector isn't in the ABI or viem can't decode the args.
+ *
+ *  `method` is the RPC method the calldata came from — passed through to
+ *  the risk scanner so eth_call / eth_estimateGas (read-only) don't trip
+ *  state-change warnings. */
 export function decodeWithAbi(
   data: `0x${string}`,
   abi: Abi,
   source: AbiSource,
   txValue?: bigint,
+  method?: string,
 ): DecodedCall | null {
   if (data.length < 10) return null;
   const selector = slice(data, 0, 4);
@@ -67,18 +72,22 @@ export function decodeWithAbi(
     value,
   }));
   const signature = `${fn.name}(${fn.inputs.map((i) => i.type).join(',')})`;
-  const risks = scanRisks({ functionName: fn.name, args, txValue });
+  const risks = scanRisks({ functionName: fn.name, args, txValue, method });
   return { source, signature, functionName: fn.name, args, risks };
 }
 
 /** Decode against the bundled built-in ABI set (ERC-20/721/1155/Permit2).
  *  Synchronous, zero-network. */
-export function decodeBuiltin(data: `0x${string}`, txValue?: bigint): DecodedCall | null {
+export function decodeBuiltin(
+  data: `0x${string}`,
+  txValue?: bigint,
+  method?: string,
+): DecodedCall | null {
   if (data.length < 10) return null;
   const selector = slice(data, 0, 4);
   const fn = findBuiltinFunction(selector);
   if (!fn) return null;
-  return decodeWithAbi(data, [fn], 'builtin', txValue);
+  return decodeWithAbi(data, [fn], 'builtin', txValue, method);
 }
 
 const SIGN_METHODS = new Set([

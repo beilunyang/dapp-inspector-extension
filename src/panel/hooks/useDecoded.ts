@@ -42,7 +42,7 @@ export function useDecoded(call: CapturedCall): DecodeState {
     }
 
     // Synchronous tier: built-in selector index. 0ms, offline.
-    const builtin = decodeBuiltin(tx.data, tx.value);
+    const builtin = decodeBuiltin(tx.data, tx.value, call.method);
     if (builtin) {
       setState({ kind: 'call', decoded: builtin });
       return;
@@ -62,7 +62,7 @@ export function useDecoded(call: CapturedCall): DecodeState {
         const cached = await getCached(chainId, to);
         if (cancelled) return;
         if (cached) {
-          const out = decodeWithAbi(data, cached.abi, 'cached', tx.value);
+          const out = decodeWithAbi(data, cached.abi, 'cached', tx.value, call.method);
           if (out) { setState({ kind: 'call', decoded: out }); return; }
         }
       }
@@ -78,7 +78,7 @@ export function useDecoded(call: CapturedCall): DecodeState {
         () => fetchSourcifyAbi(chainId, to));
       if (cancelled) return;
       if (sourcify) {
-        const out = decodeWithAbi(data, sourcify.abi, 'sourcify', tx.value);
+        const out = decodeWithAbi(data, sourcify.abi, 'sourcify', tx.value, call.method);
         if (out) { setState({ kind: 'call', decoded: out }); return; }
       }
 
@@ -91,7 +91,7 @@ export function useDecoded(call: CapturedCall): DecodeState {
       const fourbyte = await fetchFourbyteAbi(selector);
       if (cancelled) return;
       if (fourbyte) {
-        const out = decodeWithAbi(data, fourbyte, '4byte', tx.value);
+        const out = decodeWithAbi(data, fourbyte, '4byte', tx.value, call.method);
         if (out) { setState({ kind: 'call', decoded: out }); return; }
       }
 

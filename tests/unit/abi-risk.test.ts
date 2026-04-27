@@ -88,4 +88,51 @@ describe('scanRisks', () => {
     });
     expect(flags.length).toBe(0);
   });
+
+  it('skips risk scanning for read-only methods (eth_call)', () => {
+    const flags = scanRisks({
+      functionName: 'approve',
+      method: 'eth_call',
+      args: [
+        { type: 'address', value: '0x...' },
+        { type: 'uint256', value: maxUint256 },
+      ],
+    });
+    expect(flags).toEqual([]);
+  });
+
+  it('skips risk scanning for eth_estimateGas', () => {
+    const flags = scanRisks({
+      functionName: 'setApprovalForAll',
+      method: 'eth_estimateGas',
+      args: [
+        { type: 'address', value: '0xop' },
+        { type: 'bool', value: true },
+      ],
+    });
+    expect(flags).toEqual([]);
+  });
+
+  it('still flags risks when method is eth_sendTransaction', () => {
+    const flags = scanRisks({
+      functionName: 'approve',
+      method: 'eth_sendTransaction',
+      args: [
+        { type: 'address', value: '0x...' },
+        { type: 'uint256', value: maxUint256 },
+      ],
+    });
+    expect(flags.some((f) => f.label === 'UNLIMITED APPROVAL')).toBe(true);
+  });
+
+  it('still flags risks when method is undefined (conservative default)', () => {
+    const flags = scanRisks({
+      functionName: 'approve',
+      args: [
+        { type: 'address', value: '0x...' },
+        { type: 'uint256', value: maxUint256 },
+      ],
+    });
+    expect(flags.some((f) => f.label === 'UNLIMITED APPROVAL')).toBe(true);
+  });
 });

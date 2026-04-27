@@ -16,9 +16,20 @@ export interface RiskScanContext {
   /** Native (msg.value) value attached to the tx, in wei. Only present for
    *  eth_sendTransaction / eth_signTransaction. */
   txValue?: bigint;
+  /** RPC method the calldata came from. When this is a read-only method
+   *  (eth_call, eth_estimateGas) we skip risk scanning — those calls don't
+   *  result in real state changes, so flagging them as "UNLIMITED APPROVAL"
+   *  would be a false alarm. When undefined, we conservatively scan. */
+  method?: string;
 }
 
+const STATE_CHANGING = new Set(['eth_sendTransaction', 'eth_signTransaction']);
+
 export function scanRisks(ctx: RiskScanContext): RiskFlag[] {
+  // Skip read-only methods. We only flag risks for calldata that, if
+  // approved, would actually move state on chain.
+  if (ctx.method !== undefined && !STATE_CHANGING.has(ctx.method)) return [];
+
   const flags: RiskFlag[] = [];
 
   // ERC-20 approve(address spender, uint256 amount) — 2 args
