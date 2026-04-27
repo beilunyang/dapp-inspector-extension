@@ -68,19 +68,12 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
     } else if (pageMsg.kind === 'call:start') {
       const origin = pageMsg.payload.origin || tabUrlOrigin;
-      // Stamp the call with the tab's last-known chainId so the panel's
-      // ABI cache (keyed by chainId+address) can correctly bucket calls
-      // even if the user later switches networks. Without this, every
-      // CapturedCall has chainId=undefined and Sourcify lookups always
-      // miss (Sourcify URL needs a real chain).
-      const provNow = await store.getProvenance(tabId);
       const call: CapturedCall = {
         id: pageMsg.payload.id, tabId, origin,
         providerInfo: pageMsg.payload.providerInfo,
         method: pageMsg.payload.method, kind: classify(pageMsg.payload.method),
         params: pageMsg.payload.params, startedAt: pageMsg.payload.startedAt,
         status: 'pending',
-        ...(provNow.chainId ? { chainId: provNow.chainId } : {}),
         ...(pageMsg.payload.replayed ? { replayed: true } : {}),
       };
       ports.pushPanel(tabId, { kind: 'append', call });
@@ -89,17 +82,26 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
       await ports.pushPopup(settings.monitoring);
     } else if (pageMsg.kind === 'call:end') {
+      // Stamp the call with the tab's last-known chainId so the panel's
+      // ABI cache (keyed by chainId+address) can correctly bucket calls
+      // even if the user later switches networks. We do this at call:end
+      // rather than call:start to avoid an extra IDB read on call:start
+      // — the latter races with this very handler (separate onMessage
+      // IIFEs) and can let patch slip in before append, leaving the row
+      // stuck at "pending".
+      const provAtEnd = await store.getProvenance(tabId);
       const patch: Partial<CapturedCall> = {
         status: 'ok', endedAt: pageMsg.payload.endedAt,
         durationMs: pageMsg.payload.durationMs, result: pageMsg.payload.result,
       };
       if (pageMsg.payload.mocked) patch.mocked = true;
       if (pageMsg.payload.throttleMs) patch.throttleMs = pageMsg.payload.throttleMs;
+      if (provAtEnd.chainId) patch.chainId = provAtEnd.chainId;
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       const updated = await store.patch(pageMsg.payload.id, patch);
       if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
         // Persist the freshly-returned chainId onto provenance so every
-        // subsequent call:start can stamp itself with it. Without this
+        // subsequent call:end can stamp it onto its patch. Without this
         // wiring, provenance.chainId stays undefined for the whole tab
         // session and the entire ABI cache + Sourcify pipeline is dead.
         const prov = await tracker.onCallEnd(tabId, pageMsg.payload.id, pageMsg.payload.result);
@@ -107,6 +109,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       }
       await ports.pushPopup(settings.monitoring);
     } else if (pageMsg.kind === 'call:error') {
+      const provAtEnd = await store.getProvenance(tabId);
       const patch: Partial<CapturedCall> = {
         status: 'error', endedAt: pageMsg.payload.endedAt,
         durationMs: pageMsg.payload.durationMs, error: pageMsg.payload.error,
@@ -114,6 +117,7 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       if (pageMsg.payload.mocked) patch.mocked = true;
       if (pageMsg.payload.blocked) patch.blocked = true;
       if (pageMsg.payload.throttleMs) patch.throttleMs = pageMsg.payload.throttleMs;
+      if (provAtEnd.chainId) patch.chainId = provAtEnd.chainId;
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       await store.patch(pageMsg.payload.id, patch);
       await ports.pushPopup(settings.monitoring);
