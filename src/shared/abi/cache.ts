@@ -145,11 +145,41 @@ export async function clearCache(): Promise<void> {
   }
 }
 
-/** Test seam — drop in-memory state without touching chrome.storage. */
+// Cross-context invalidation: when another extension surface (Options →
+// Clear ABI cache) wipes our storage entry, the in-memory mirror in
+// other contexts (panel) must also drop or hydrate() will keep serving
+// stale data. Auto-installs at module load in extension contexts;
+// re-installable from tests after a chrome mock is set up.
+let listenerInstalled = false;
+function installChangeListener(): void {
+  if (listenerInstalled) return;
+  try {
+    chrome.storage?.onChanged?.addListener((changes, area) => {
+      if (area !== 'local') return;
+      const change = changes[STORAGE_KEY];
+      if (!change) return;
+      if (change.newValue === undefined) {
+        memCache = null;
+        hydrating = null;
+        inflight.clear();
+      }
+    });
+    listenerInstalled = true;
+  } catch {
+    /* not in extension context (tests / SSR) — caller can re-invoke later */
+  }
+}
+installChangeListener();
+
+/** Test seam — drop in-memory state without touching chrome.storage.
+ *  Also re-installs the storage.onChanged listener against whatever
+ *  chrome mock is currently active. */
 export function _resetForTests(): void {
   memCache = null;
   hydrating = null;
   inflight.clear();
+  listenerInstalled = false;
+  installChangeListener();
 }
 
 export type { CacheEntry };
