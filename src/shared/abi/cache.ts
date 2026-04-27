@@ -1,5 +1,6 @@
 import type { Abi } from 'viem';
 import type { AbiSource } from './types';
+import type { AbiFetchOutcome } from './sourcify';
 
 const STORAGE_KEY = 'dappinsp.abi-cache.v1';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -17,9 +18,17 @@ type CacheMap = Record<string, CacheEntry>;
 let memCache: CacheMap | null = null;
 let hydrating: Promise<CacheMap> | null = null;
 
+/** Outcome of withSingleFlight — surfaces the underlying fetcher's
+ *  miss-vs-error distinction so the caller can decide whether to memoise
+ *  the negative result or leave it open for retry. */
+export type SingleFlightResult =
+  | { status: 'ok'; entry: CacheEntry }
+  | { status: 'miss' }
+  | { status: 'error' };
+
 // In-flight Promise dedup: concurrent decode requests for the same key
 // share a single underlying fetch.
-const inflight = new Map<string, Promise<CacheEntry | null>>();
+const inflight = new Map<string, Promise<SingleFlightResult>>();
 
 function key(chainId: string | undefined, address: string | undefined): string | null {
   if (!address) return null;
@@ -92,30 +101,32 @@ export async function putCached(
 
 /**
  * Single-flight wrapper. Concurrent calls with the same (chainId, address)
- * share one underlying fetcher Promise. Result is cached on success.
+ * share one underlying fetcher Promise. Successful results are cached;
+ * 'miss' and 'error' are surfaced to the caller without storage writes.
  */
 export async function withSingleFlight(
   chainId: string | undefined,
   address: string,
   source: AbiSource,
-  fetcher: () => Promise<Abi | null>,
-): Promise<CacheEntry | null> {
+  fetcher: () => Promise<AbiFetchOutcome>,
+): Promise<SingleFlightResult> {
   const k = key(chainId, address);
-  if (!k) return null;
+  if (!k) return { status: 'miss' };
   const existing = inflight.get(k);
   if (existing) return existing;
 
-  const p = (async () => {
+  const p = (async (): Promise<SingleFlightResult> => {
     try {
-      const abi = await fetcher();
-      if (!abi) return null;
-      const entry: CacheEntry = { abi, source, fetchedAt: Date.now() };
+      const out = await fetcher();
+      if (out === 'miss') return { status: 'miss' };
+      if (out === 'error') return { status: 'error' };
+      const entry: CacheEntry = { abi: out, source, fetchedAt: Date.now() };
       const map = await hydrate();
       map[k] = entry;
       void persist();
-      return entry;
+      return { status: 'ok', entry };
     } catch {
-      return null;
+      return { status: 'error' };
     } finally {
       inflight.delete(k);
     }

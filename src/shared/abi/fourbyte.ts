@@ -1,4 +1,5 @@
 import { parseAbiItem, type Abi } from 'viem';
+import type { AbiFetchOutcome } from './sourcify';
 
 // Sourcify-stewarded selector → text-signature DB. Drop-in successor to
 // the legacy openchain.xyz API; same shape, more reliable host.
@@ -27,32 +28,33 @@ interface FourbyteResponse {
  *      submission.
  *   3. Fall back to first non-filtered if none of the above match.
  *
- * Returns null on network error, miss, or no acceptable candidate.
+ * Returns 'miss' for definitive negatives (no candidate / all filtered),
+ * 'error' for transient failures (network, 5xx, parse error).
  */
-export async function fetchFourbyteAbi(selector: `0x${string}`): Promise<Abi | null> {
-  if (!/^0x[0-9a-fA-F]{8}$/.test(selector)) return null;
+export async function fetchFourbyteAbi(selector: `0x${string}`): Promise<AbiFetchOutcome> {
+  if (!/^0x[0-9a-fA-F]{8}$/.test(selector)) return 'miss';
   const url = `${FOURBYTE_BASE}?function=${selector.toLowerCase()}`;
 
   let res: Response;
   try {
     res = await fetch(url, { method: 'GET' });
   } catch {
-    return null;
+    return 'error';
   }
-  if (!res.ok) return null;
+  if (!res.ok) return 'error';
 
   let body: FourbyteResponse;
   try {
     body = await res.json() as FourbyteResponse;
   } catch {
-    return null;
+    return 'error';
   }
-  if (!body?.ok) return null;
+  if (!body?.ok) return 'miss';  // upstream said "no result"
   const candidates = body.result?.function?.[selector.toLowerCase()];
-  if (!candidates || candidates.length === 0) return null;
+  if (!candidates || candidates.length === 0) return 'miss';
 
   const usable = candidates.filter((c) => !c.filtered && typeof c.name === 'string');
-  if (usable.length === 0) return null;
+  if (usable.length === 0) return 'miss';
   // Pick the highest-confidence candidate. We don't surface multiple
   // matches in the UI — for "audit before signing" a single confident
   // guess is more useful than ambiguous options.
@@ -68,6 +70,6 @@ export async function fetchFourbyteAbi(selector: `0x${string}`): Promise<Abi | n
     const item = (parseAbiItem as unknown as (s: string) => Abi[number])(`function ${pick.name}`);
     return [item] as Abi;
   } catch {
-    return null;
+    return 'miss';  // signature unparseable — won't get better
   }
 }

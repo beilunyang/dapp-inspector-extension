@@ -64,14 +64,27 @@ describe('abi cache', () => {
       withSingleFlight('0x1', '0xdef', 'sourcify', fetcher),
     ]);
     expect(calls).toBe(1);
-    expect(a?.source).toBe('sourcify');
-    expect(b?.source).toBe('sourcify');
-    expect(c?.source).toBe('sourcify');
+    expect(a.status).toBe('ok');
+    expect(b.status).toBe('ok');
+    expect(c.status).toBe('ok');
   });
 
-  it('withSingleFlight does not cache null results', async () => {
-    const result = await withSingleFlight('0x1', '0xnope', 'sourcify', async () => null);
-    expect(result).toBeNull();
+  it('withSingleFlight surfaces miss without writing storage', async () => {
+    const result = await withSingleFlight('0x1', '0xnope', 'sourcify', async () => 'miss');
+    expect(result.status).toBe('miss');
     expect(await getCached('0x1', '0xnope')).toBeNull();
+  });
+
+  it('withSingleFlight surfaces error without writing storage', async () => {
+    const result = await withSingleFlight('0x1', '0xboom', 'sourcify', async () => 'error');
+    expect(result.status).toBe('error');
+    expect(await getCached('0x1', '0xboom')).toBeNull();
+  });
+
+  it('withSingleFlight maps thrown fetcher errors to "error"', async () => {
+    const result = await withSingleFlight('0x1', '0xthrow', 'sourcify', async () => {
+      throw new Error('boom');
+    });
+    expect(result.status).toBe('error');
   });
 });

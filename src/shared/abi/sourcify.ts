@@ -8,6 +8,14 @@ const SOURCIFY_BASE = 'https://sourcify.dev/server/files/any';
 interface SourcifyFile { name: string; path?: string; content: string }
 interface SourcifyResponse { status?: string; files?: SourcifyFile[] }
 
+/** Tri-state outcome for ABI fetchers. The caller distinguishes:
+ *  - Abi: success, decode and cache;
+ *  - 'miss': definitive negative (e.g. 404 not verified) — won't get better
+ *    with retry, so callers can memoise 'no decode' on this signal;
+ *  - 'error': transient (network failure, 5xx, malformed body) — caller
+ *    should NOT pin a negative result; next tab switch should retry. */
+export type AbiFetchOutcome = Abi | 'miss' | 'error';
+
 export function chainIdHexToDecimal(hex: string | undefined): string | null {
   if (!hex) return null;
   if (!hex.startsWith('0x')) return /^\d+$/.test(hex) ? hex : null;
@@ -19,45 +27,43 @@ export function chainIdHexToDecimal(hex: string | undefined): string | null {
 }
 
 /**
- * Fetch a contract's ABI from Sourcify by (chainId, address). Returns null
- * on 404 (not verified), parse failure, or network error — caller decides
- * whether to fall through to the next tier.
- *
- * We deliberately keep this unauthenticated and untimed — Sourcify is
- * EF-supported and the request is per-contract (not per-call), so rate
- * limits aren't a concern for typical browsing.
+ * Fetch a contract's ABI from Sourcify by (chainId, address). Returns
+ * 'miss' when Sourcify confirms the contract isn't verified, 'error' on
+ * any transient failure (network down, 5xx, unparseable body) so the
+ * caller can decide whether to memoise the negative result.
  */
 export async function fetchSourcifyAbi(
   chainIdHex: string | undefined,
   address: string,
-): Promise<Abi | null> {
+): Promise<AbiFetchOutcome> {
   const chainId = chainIdHexToDecimal(chainIdHex);
-  if (!chainId) return null;
+  if (!chainId) return 'miss';  // unrecoverable input — won't retry
   const url = `${SOURCIFY_BASE}/${chainId}/${address}`;
 
   let res: Response;
   try {
     res = await fetch(url, { method: 'GET' });
   } catch {
-    return null;
+    return 'error';  // network down / DNS / CORS / aborted
   }
-  if (!res.ok) return null;
+  if (res.status === 404) return 'miss';
+  if (!res.ok) return 'error';  // 5xx or unexpected non-200/404
 
   let body: SourcifyResponse;
   try {
     body = await res.json() as SourcifyResponse;
   } catch {
-    return null;
+    return 'error';  // server returned 200 with non-JSON — treat as transient
   }
   const metaFile = body?.files?.find((f) => f.name === 'metadata.json');
-  if (!metaFile) return null;
+  if (!metaFile) return 'miss';
   let meta: { output?: { abi?: Abi } };
   try {
     meta = JSON.parse(metaFile.content) as { output?: { abi?: Abi } };
   } catch {
-    return null;
+    return 'miss';  // verified record exists but metadata is malformed
   }
   const abi = meta.output?.abi;
-  if (!Array.isArray(abi) || abi.length === 0) return null;
+  if (!Array.isArray(abi) || abi.length === 0) return 'miss';
   return abi as Abi;
 }

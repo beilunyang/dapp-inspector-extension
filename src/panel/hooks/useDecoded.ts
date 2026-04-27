@@ -64,9 +64,21 @@ export function useDecoded(call: CapturedCall): DecodeState {
   const autoFetchAbi = useSettingsStore((s) => s.autoFetchAbi);
 
   useEffect(() => {
+    // Track whether any async tier hit a transient error (network /
+    // 5xx / parse failure). When yes, we deliberately don't memo a
+    // 'none' terminal — the next mount should retry instead of pinning
+    // a possibly-stale negative result.
+    let transientError = false;
+
     const settle = (next: DecodeState) => {
-      // Only memoise terminal states — 'loading' is by design ephemeral.
-      if (next.kind !== 'loading') memo.set(call.id, next);
+      if (next.kind === 'loading') { setState(next); return; }
+      // Skip memo for negative outcomes that were caused by transient
+      // failures so a tab-switch / re-mount can retry.
+      if (next.kind === 'none' && transientError) {
+        setState(next);
+        return;
+      }
+      memo.set(call.id, next);
       setState(next);
     };
 
@@ -128,20 +140,22 @@ export function useDecoded(call: CapturedCall): DecodeState {
       const sourcify = await withSingleFlight(chainId, to, 'sourcify',
         () => fetchSourcifyAbi(chainId, to));
       if (cancelled) return;
-      if (sourcify) {
-        const out = decodeWithAbi(data, sourcify.abi, 'sourcify', tx.value, call.method);
+      if (sourcify.status === 'ok') {
+        const out = decodeWithAbi(data, sourcify.entry.abi, 'sourcify', tx.value, call.method);
         if (out) { settle({ kind: 'call', decoded: out }); return; }
+      } else if (sourcify.status === 'error') {
+        transientError = true;
       }
 
       // Tier 4: 4byte.sourcify.dev — selector-only fallback for unverified
       // contracts. Param names are lost (decoder shows arg0/arg1), source
       // tagged '4byte' so the UI can flag low-confidence in the badge color.
-      // Not address-keyed, so we cache against the selector instead — same
-      // selector resolves identically across any contract.
       const selector = slice(data, 0, 4);
       const fourbyte = await fetchFourbyteAbi(selector);
       if (cancelled) return;
-      if (fourbyte) {
+      if (fourbyte === 'error') {
+        transientError = true;
+      } else if (fourbyte !== 'miss') {
         const out = decodeWithAbi(data, fourbyte, '4byte', tx.value, call.method);
         if (out) { settle({ kind: 'call', decoded: out }); return; }
       }
