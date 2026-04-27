@@ -7,6 +7,7 @@ export interface BgStore {
   clear(tabId: number): Promise<void>;
   clearAll(): Promise<void>;
   snapshot(tabId: number): Promise<{ calls: CapturedCall[]; provenance: TabProvenance }>;
+  getProvenance(tabId: number): Promise<TabProvenance>;
   putProvenance(prov: TabProvenance): Promise<void>;
   totalCount(): Promise<number>;
   enforceRetention(max: number): Promise<number>;
@@ -34,6 +35,9 @@ export async function createStore(): Promise<BgStore> {
         db.getProvenance(tabId),
       ]);
       return { calls, provenance: prov ?? DEFAULT_PROVENANCE(tabId) };
+    },
+    async getProvenance(tabId) {
+      return (await db.getProvenance(tabId)) ?? DEFAULT_PROVENANCE(tabId);
     },
     async putProvenance(prov) { await db.putProvenance(prov); },
     async totalCount() { return db.countCalls(); },

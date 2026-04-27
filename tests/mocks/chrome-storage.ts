@@ -31,7 +31,15 @@ export function installChromeStorageMock() {
     },
     remove: async (k: string | string[]) => {
       const keys = Array.isArray(k) ? k : [k];
-      for (const key of keys) store.delete(key);
+      const changes: Record<string, chrome.storage.StorageChange> = {};
+      for (const key of keys) {
+        if (!store.has(key)) continue;
+        changes[key] = { oldValue: store.get(key), newValue: undefined };
+        store.delete(key);
+      }
+      if (Object.keys(changes).length > 0) {
+        for (const l of listeners) l(changes, 'local');
+      }
     },
     clear: async () => store.clear(),
   };
