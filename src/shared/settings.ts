@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
     'net_version',
   ],
   accent: 'indigo',
+  autoFetchAbi: true,
 };
 
 const KEY = 'dapp-inspector:settings';

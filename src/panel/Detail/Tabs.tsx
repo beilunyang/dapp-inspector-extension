@@ -1,14 +1,39 @@
+import { useEffect, useMemo } from 'react';
 import { useViewStore } from '../stores/view-store';
 import { useT } from '@shared/stores/i18n-store';
 import { JsonTree } from '@shared/ui/JsonTree';
 import type { CapturedCall } from '@shared/types';
+import { hasDecodableContent } from '@shared/abi/decode';
+import { DecodedView } from './Decoded';
 
-const TABS = ['params', 'result', 'timing', 'raw'] as const;
+const ALL_TABS = ['decoded', 'params', 'result', 'timing', 'raw'] as const;
 
 export function DetailTabs({ call }: { call: CapturedCall }) {
   const t = useT();
   const active = useViewStore(s => s.activeTab);
   const setTab = useViewStore(s => s.setTab);
+
+  // Decoded tab is only shown when the call carries calldata (eth_call /
+  // eth_sendTransaction / eth_signTransaction / eth_estimateGas with a
+  // params[0].data). We derive this once per call to drive both the tab
+  // strip and the auto-select effect below.
+  const hasDecoded = useMemo(() => hasDecodableContent(call), [call]);
+
+  const tabs = hasDecoded ? ALL_TABS : ALL_TABS.filter(n => n !== 'decoded');
+
+  // Auto-jump to Decoded when (a) the new call has decoded content and
+  // (b) the user isn't already pinned on a specific tab from this call.
+  // Triggered on call.id change, not on every render — this keeps user's
+  // tab choice sticky within a single call detail view.
+  useEffect(() => {
+    if (hasDecoded && (active === 'decoded' || active === 'params')) {
+      setTab('decoded');
+    } else if (!hasDecoded && active === 'decoded') {
+      setTab('params');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call.id, hasDecoded]);
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <div
@@ -20,7 +45,7 @@ export function DetailTabs({ call }: { call: CapturedCall }) {
           borderBottom: '1px solid rgb(var(--border-soft))',
         }}
       >
-        {TABS.map(name => {
+        {tabs.map(name => {
           const isActive = active === name;
           return (
             <div
@@ -50,10 +75,16 @@ export function DetailTabs({ call }: { call: CapturedCall }) {
 }
 
 function renderTab(
-  tab: typeof TABS[number],
+  tab: typeof ALL_TABS[number],
   c: CapturedCall,
   t: (key: string, vars?: Record<string, string | number>) => string,
 ) {
+  if (tab === 'decoded') return (
+    <>
+      <SectionLabel>{t('panel.detail.sec.decoded')}</SectionLabel>
+      <DecodedView call={c} />
+    </>
+  );
   if (tab === 'params') return (
     <>
       <SectionLabel>{t('panel.detail.sec.params')}</SectionLabel>

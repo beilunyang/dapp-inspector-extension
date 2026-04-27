@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 
-const MAX_INLINE_STRING = 80;
 const LARGE_THRESHOLD_BYTES = 1024 * 1024; // 1MB
 
 export function JsonTree({ value }: { value: unknown }) {
@@ -23,8 +22,10 @@ function Node({ value, depth, initiallyOpen }: { value: unknown; depth: number; 
   if (value === undefined) return <span className="text-muted">undefined</span>;
   const t = typeof value;
   if (t === 'string') {
-    const s = value as string;
-    return <span className="text-kind-subscribe">"{s.length > MAX_INLINE_STRING ? s.slice(0, MAX_INLINE_STRING) + '…' : s}"</span>;
+    // Show the full string verbatim — params often carry long hex
+    // (calldata, signatures) where truncation hides what users came
+    // here to see. break-all lets the layout wrap instead of overflowing.
+    return <span className="text-kind-subscribe break-all" style={{ whiteSpace: 'pre-wrap' }}>{`"${value as string}"`}</span>;
   }
   if (t === 'number' || t === 'boolean' || t === 'bigint') return <span className="text-kind-write">{String(value)}</span>;
   if (Array.isArray(value)) return <Collapsible label={`Array(${value.length})`} depth={depth} initiallyOpen={initiallyOpen}>
@@ -57,8 +58,11 @@ function Collapsible({ label, depth, initiallyOpen, children }: { label: string;
 }
 
 function Row({ name, depth: _depth, children }: { name: string; depth: number; children: React.ReactNode }) {
+  // whitespace-pre on the row would refuse to wrap long string values; we
+  // let inline content flow and rely on the value span's break-all to
+  // handle the actual wrapping.
   return (
-    <div className="whitespace-pre">
+    <div>
       <span className="text-accent">{name}</span>
       <span className="text-muted">: </span>
       {children}
