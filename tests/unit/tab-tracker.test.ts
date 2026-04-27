@@ -62,4 +62,34 @@ describe('tab tracker origin refresh', () => {
     const prov2 = (await store.snapshot(1)).provenance;
     expect(prov2.chainId).toBe('0x89');
   });
+
+  it('onCallEnd persists eth_chainId result onto provenance', async () => {
+    // The whole ABI cache pipeline depends on this: provenance.chainId
+    // is the only place every later call learns the active network from.
+    // Sourcify lookups gate on a real chainId, so if this contract ever
+    // breaks again, replay/cache stops working too.
+    const call = mkCall({ id: 'cc', method: 'eth_chainId' });
+    await store.append(call);
+    await tracker.onCallStart(1, call);
+    const prov = await tracker.onCallEnd(1, 'cc', '0x1');
+    expect(prov?.chainId).toBe('0x1');
+    expect((await store.snapshot(1)).provenance.chainId).toBe('0x1');
+  });
+
+  it('onCallEnd ignores non-string results', async () => {
+    const call = mkCall({ id: 'cc', method: 'eth_chainId' });
+    await store.append(call);
+    await tracker.onCallStart(1, call);
+    const prov = await tracker.onCallEnd(1, 'cc', 1);  // some buggy wallet
+    expect(prov).toBeNull();
+    expect((await store.snapshot(1)).provenance.chainId).toBeUndefined();
+  });
+
+  it('onCallEnd is a no-op for non-eth_chainId calls', async () => {
+    const call = mkCall({ id: 'cc', method: 'eth_call' });
+    await store.append(call);
+    await tracker.onCallStart(1, call);
+    const prov = await tracker.onCallEnd(1, 'cc', '0xdeadbeef');
+    expect(prov).toBeNull();
+  });
 });

@@ -98,7 +98,12 @@ chrome.runtime.onMessage.addListener((msg: PageMsg | AdminMsg, sender) => {
       ports.pushPanel(tabId, { kind: 'update', id: pageMsg.payload.id, patch });
       const updated = await store.patch(pageMsg.payload.id, patch);
       if (updated?.method === 'eth_chainId' && typeof pageMsg.payload.result === 'string') {
-        await tracker.onProvider(tabId, updated.providerInfo, updated.origin || tabUrlOrigin, url);
+        // Persist the freshly-returned chainId onto provenance so every
+        // subsequent call:start can stamp itself with it. Without this
+        // wiring, provenance.chainId stays undefined for the whole tab
+        // session and the entire ABI cache + Sourcify pipeline is dead.
+        const prov = await tracker.onCallEnd(tabId, pageMsg.payload.id, pageMsg.payload.result);
+        if (prov) ports.pushPanel(tabId, { kind: 'provenance', provenance: prov });
       }
       await ports.pushPopup(settings.monitoring);
     } else if (pageMsg.kind === 'call:error') {

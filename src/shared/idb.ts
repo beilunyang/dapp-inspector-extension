@@ -105,6 +105,10 @@ export async function openDb(): Promise<DappInspectorDb> {
     },
     async clearAll() {
       await tx(db, CALLS, 'readwrite', (s) => request(s.clear()));
+      // Also flush per-tab provenance — without this a "Clear all history"
+      // leaves stale chainId / wallets attached to the tab, and tests
+      // can't isolate state between cases.
+      await tx(db, PROVENANCE, 'readwrite', (s) => request(s.clear()));
     },
     async countCalls() {
       return tx(db, CALLS, 'readonly', (s) => request(s.count()));
