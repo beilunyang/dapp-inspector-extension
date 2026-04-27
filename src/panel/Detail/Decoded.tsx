@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import type { CapturedCall } from '@shared/types';
 import { useT } from '@shared/stores/i18n-store';
-import { decodeBuiltin, extractTxContext } from '@shared/abi/decode';
-import type { AbiSource, DecodedArg, DecodedCall, RiskFlag, RiskSeverity } from '@shared/abi/types';
+import { extractTxContext } from '@shared/abi/decode';
+import { useDecoded } from '../hooks/useDecoded';
+import type { AbiSource, DecodedArg, DecodedCall, RiskFlag, RiskSeverity, SignDecode } from '@shared/abi/types';
 
 const SEVERITY_COLOR: Record<RiskSeverity, string> = {
   info:    'rgb(var(--accent))',
@@ -20,15 +21,27 @@ const SOURCE_COLOR: Record<AbiSource, string> = {
 export function DecodedView({ call }: { call: CapturedCall }) {
   const t = useT();
   const tx = useMemo(() => extractTxContext(call), [call]);
-  const decoded = useMemo<DecodedCall | null>(() => {
-    if (!tx?.data) return null;
-    return decodeBuiltin(tx.data, tx.value);
-  }, [tx]);
+  const state = useDecoded(call);
+
+  // Sign variant — typed-data or personal_sign / eth_sign messages.
+  if (state.kind === 'sign') {
+    return <SignView sign={state.sign} t={t} />;
+  }
+
+  const decoded: DecodedCall | null = state.kind === 'call' ? state.decoded : null;
 
   if (!tx?.data) {
     return (
       <div className="text-[12px]" style={{ color: 'rgb(var(--fg-muted))' }}>
         {t('panel.detail.decoded.noDecode')}
+      </div>
+    );
+  }
+
+  if (state.kind === 'loading') {
+    return (
+      <div className="text-[12px]" style={{ color: 'rgb(var(--fg-muted))' }}>
+        {t('panel.detail.decoded.loading')}
       </div>
     );
   }
@@ -256,6 +269,120 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       style={{ fontSize: 10, fontWeight: 600, color: 'rgb(var(--fg-dim))', letterSpacing: 0.8 }}
     >
       {children}
+    </div>
+  );
+}
+
+function SignView({ sign, t }: { sign: SignDecode; t: (k: string) => string }) {
+  if (sign.kind === 'typedData') {
+    const head = sign.primaryType ? `EIP-712 · ${sign.primaryType}` : 'EIP-712 typed data';
+    return (
+      <>
+        <div className="flex items-center gap-[8px] mb-[10px]">
+          <span className="mono text-[13px]" style={{ color: 'rgb(var(--fg))', fontWeight: 600 }}>
+            {head}
+          </span>
+        </div>
+        <SignSection label={t('panel.detail.decoded.typed.domain')} value={sign.domain} />
+        <SignSection label={t('panel.detail.decoded.typed.types')} value={sign.types} />
+        <SignSection label={t('panel.detail.decoded.typed.message')} value={sign.message} highlight />
+        <RawJsonToggle raw={sign.raw} t={t} />
+      </>
+    );
+  }
+  // message variant
+  return (
+    <>
+      <div className="flex items-center gap-[8px] mb-[10px]">
+        <span className="mono text-[13px]" style={{ color: 'rgb(var(--fg))', fontWeight: 600 }}>
+          {t('panel.detail.decoded.signedMessage')}
+        </span>
+        {!sign.isUtf8 && (
+          <span
+            className="mono"
+            style={{
+              fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 3,
+              color: 'rgb(var(--amber))',
+              background: 'color-mix(in oklab, rgb(var(--amber)) 14%, transparent)',
+            }}
+          >
+            {t('panel.detail.decoded.notUtf8')}
+          </span>
+        )}
+      </div>
+      <pre
+        className="mono scroll"
+        style={{
+          background: 'rgb(var(--surface))', padding: 10, borderRadius: 6,
+          border: '1px solid rgb(var(--border-soft))', fontSize: 11.5,
+          color: 'rgb(var(--fg))', overflow: 'auto', margin: 0,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+        }}
+      >
+        {sign.text}
+      </pre>
+      {sign.isUtf8 && sign.raw !== sign.text && <RawJsonToggle raw={sign.raw} t={t} label={t('panel.detail.decoded.rawHex')} />}
+    </>
+  );
+}
+
+function SignSection({ label, value, highlight }: { label: string; value: unknown; highlight?: boolean }) {
+  let body: string;
+  try {
+    body = JSON.stringify(value, (_, v) => (typeof v === 'bigint' ? v.toString() : v), 2);
+  } catch {
+    body = String(value);
+  }
+  return (
+    <div className="mb-3">
+      <SectionLabel>{label}</SectionLabel>
+      <pre
+        className="mono scroll"
+        style={{
+          background: highlight
+            ? 'color-mix(in oklab, rgb(var(--accent)) 6%, rgb(var(--surface)))'
+            : 'rgb(var(--surface))',
+          padding: 10, borderRadius: 6,
+          border: '1px solid rgb(var(--border-soft))',
+          fontSize: 11, color: 'rgb(var(--fg))', overflow: 'auto', margin: 0,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+        }}
+      >
+        {body || '—'}
+      </pre>
+    </div>
+  );
+}
+
+function RawJsonToggle({ raw, t, label }: { raw: string; t: (k: string) => string; label?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-[5px] cursor-pointer"
+        style={{
+          fontSize: 11, color: 'rgb(var(--fg-muted))',
+          background: 'transparent', border: 'none', padding: 0,
+          textTransform: 'uppercase', letterSpacing: 0.5,
+        }}
+      >
+        <span>{open ? '▾' : '▸'}</span>
+        {label ?? t('panel.detail.decoded.rawPayload')}
+      </button>
+      {open && (
+        <pre
+          className="mono scroll mt-2"
+          style={{
+            background: 'rgb(var(--surface))', padding: 10, borderRadius: 6,
+            border: '1px solid rgb(var(--border-soft))', fontSize: 11,
+            color: 'rgb(var(--fg))', overflow: 'auto', margin: 0,
+            whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+          }}
+        >
+          {raw}
+        </pre>
+      )}
     </div>
   );
 }

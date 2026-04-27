@@ -53,4 +53,7 @@ export interface Settings {
   retentionMax: number;        // 500–50000
   ignoredMethods: string[];
   accent: 'cyan' | 'violet' | 'green' | 'amber' | 'indigo';
+  /** Allow ABI lookup over the network (Sourcify + 4byte). When false the
+   *  Decoded tab uses cache + built-in only and never makes external calls. */
+  autoFetchAbi: boolean;
 }

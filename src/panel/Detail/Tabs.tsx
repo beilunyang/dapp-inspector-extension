@@ -3,7 +3,7 @@ import { useViewStore } from '../stores/view-store';
 import { useT } from '@shared/stores/i18n-store';
 import { JsonTree } from '@shared/ui/JsonTree';
 import type { CapturedCall } from '@shared/types';
-import { extractTxContext } from '@shared/abi/decode';
+import { hasDecodableContent } from '@shared/abi/decode';
 import { DecodedView } from './Decoded';
 
 const ALL_TABS = ['decoded', 'params', 'result', 'timing', 'raw'] as const;
@@ -17,10 +17,7 @@ export function DetailTabs({ call }: { call: CapturedCall }) {
   // eth_sendTransaction / eth_signTransaction / eth_estimateGas with a
   // params[0].data). We derive this once per call to drive both the tab
   // strip and the auto-select effect below.
-  const hasDecoded = useMemo(() => {
-    const tx = extractTxContext(call);
-    return Boolean(tx?.data);
-  }, [call]);
+  const hasDecoded = useMemo(() => hasDecodableContent(call), [call]);
 
   const tabs = hasDecoded ? ALL_TABS : ALL_TABS.filter(n => n !== 'decoded');
 

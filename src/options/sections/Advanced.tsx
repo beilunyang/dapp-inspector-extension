@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { DEFAULT_SETTINGS } from '@shared/settings';
+import { clearCache as clearAbiCache } from '@shared/abi/cache';
 import type { AdminMsg } from '@shared/messages';
 import { PageTitle, SectionTitle, Row } from '../primitives';
 
@@ -83,6 +84,16 @@ export function Advanced() {
           </button>
         </div>
       </div>
+
+      <Row
+        title={t('options.advanced.clearAbiCache')}
+        desc={t('options.advanced.clearAbiCacheHint')}
+        control={
+          <button onClick={() => void clearAbiCache()} className="btn">
+            {t('common.confirm')}
+          </button>
+        }
+      />
 
       <Row
         title={t('options.advanced.resetSettings')}

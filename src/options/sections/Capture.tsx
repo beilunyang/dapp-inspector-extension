@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useT } from '@shared/stores/i18n-store';
 import { useSettingsStore } from '@shared/stores/settings-store';
 import { Icon } from '@shared/ui/Icon';
-import { PageTitle, Row } from '../primitives';
+import { PageTitle, Row, MiniToggle } from '../primitives';
 
 export function Capture() {
   const t = useT();
   const retention = useSettingsStore(s => s.retentionMax);
   const ignored = useSettingsStore(s => s.ignoredMethods);
+  const autoFetchAbi = useSettingsStore(s => s.autoFetchAbi);
   const update = useSettingsStore(s => s.update);
   const [storage, setStorage] = useState<{ used: number; quota: number } | null>(null);
 
@@ -73,6 +74,12 @@ export function Capture() {
           />
         </div>
       </div>
+
+      <Row
+        title={t('options.capture.autoFetchAbi')}
+        desc={t('options.capture.autoFetchAbiDesc')}
+        control={<MiniToggle value={autoFetchAbi} onChange={(v) => update({ autoFetchAbi: v })} />}
+      />
 
       <Row
         title={t('options.capture.ignoredMethods')}
