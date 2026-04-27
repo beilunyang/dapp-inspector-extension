@@ -82,12 +82,25 @@ export const en = {
       priority: 'Block/Throttle rules run before Mock rules and before the real provider.',
     },
     detail: {
-      tabs: { params: 'Parameters', result: 'Result', timing: 'Timing', raw: 'Raw' },
+      tabs: { decoded: 'Decoded', params: 'Parameters', result: 'Result', timing: 'Timing', raw: 'Raw' },
       sec: {
+        decoded: 'Decoded calldata',
         params: 'Request parameters',
         result: 'Return value',
         timing: 'Breakdown · {n} ms',
         raw: 'Raw JSON-RPC envelope',
+      },
+      decoded: {
+        risks: 'Risks',
+        args: 'Arguments',
+        rawToggle: 'Raw calldata',
+        noDecode: 'No decoded view available for this method.',
+        contract: 'Contract',
+        signature: 'Function',
+        sourceBuiltin: 'BUILTIN',
+        sourceSourcify: 'SOURCIFY',
+        sourceFourbyte: '4BYTE',
+        sourceCached: 'CACHED',
       },
       timing: {
         dapp: 'DApp dispatch',

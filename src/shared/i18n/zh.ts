@@ -84,12 +84,25 @@ export const zh: I18nDict = {
       priority: '阻断/限速规则优先于 Mock 规则与真实 provider。',
     },
     detail: {
-      tabs: { params: '参数', result: '返回值', timing: '耗时', raw: '原始数据' },
+      tabs: { decoded: '解码', params: '参数', result: '返回值', timing: '耗时', raw: '原始数据' },
       sec: {
+        decoded: '解码后的 calldata',
         params: '请求参数',
         result: '返回值',
         timing: '耗时分解 · {n} 毫秒',
         raw: '原始 JSON-RPC 报文',
+      },
+      decoded: {
+        risks: '风险提示',
+        args: '参数',
+        rawToggle: '原始 calldata',
+        noDecode: '当前方法不支持解码视图。',
+        contract: '合约',
+        signature: '函数',
+        sourceBuiltin: 'BUILTIN',
+        sourceSourcify: 'SOURCIFY',
+        sourceFourbyte: '4BYTE',
+        sourceCached: 'CACHED',
       },
       timing: {
         dapp: 'DApp 发送',

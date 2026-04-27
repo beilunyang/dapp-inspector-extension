@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Kind } from '@shared/types';
 
-type Tab = 'params' | 'result' | 'timing' | 'raw';
+type Tab = 'decoded' | 'params' | 'result' | 'timing' | 'raw';
 
 interface ViewState {
   selectedCallId: string | null;
