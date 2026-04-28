@@ -86,14 +86,25 @@ export function fmtChain(input: string | undefined, mode: 'name' | 'name+hex'): 
   return mode === 'name' ? name : `${name} · ${input}`;
 }
 
-/** Title-attribute friendly long form: "Ethereum · 0x1 (1)". */
+/** Multi-line tooltip body with explicit labels so hex vs decimal is
+ *  unambiguous on hover. Browsers render \n in title attrs as line
+ *  breaks. Example output for chainId 1:
+ *
+ *    Ethereum
+ *    Hex:     0x1
+ *    Decimal: 1
+ *
+ *  For unknown chains the name line is omitted; for hex-less inputs
+ *  (e.g. a bare decimal "137") the hex line is omitted. */
 export function chainTitle(input: string | undefined): string {
   if (!input) return '';
   const id = chainIdToNumber(input);
   const name = lookupChainName(input);
-  const decimal = id !== null ? ` (${id})` : '';
-  if (!name) return `${input}${decimal}`;
-  return `${name} · ${input}${decimal}`;
+  const lines: string[] = [];
+  if (name) lines.push(name);
+  if (input.startsWith('0x')) lines.push(`Hex:     ${input}`);
+  if (id !== null) lines.push(`Decimal: ${id}`);
+  return lines.join('\n');
 }
 
 async function loadFromStorage(): Promise<StoredCache | null> {

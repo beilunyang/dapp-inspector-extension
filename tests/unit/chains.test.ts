@@ -88,12 +88,16 @@ describe('chainTitle (tooltip)', () => {
     _resetForTests();
   });
 
-  it('combines name + hex + decimal for known chain', () => {
-    expect(chainTitle('0x1')).toBe('Ethereum · 0x1 (1)');
+  it('multi-line: name + hex + decimal for a known chain', () => {
+    expect(chainTitle('0x1')).toBe('Ethereum\nHex:     0x1\nDecimal: 1');
   });
 
-  it('hex + decimal for unknown chain', () => {
-    expect(chainTitle('0xdead')).toBe('0xdead (57005)');
+  it('omits name line when chain is unknown', () => {
+    expect(chainTitle('0xdead')).toBe('Hex:     0xdead\nDecimal: 57005');
+  });
+
+  it('omits the hex line for a bare decimal input', () => {
+    expect(chainTitle('1')).toBe('Ethereum\nDecimal: 1');
   });
 
   it('empty string for nullish input', () => {
