@@ -3,6 +3,7 @@ import { useCapturesStore } from './stores/captures-store';
 import { useViewStore } from './stores/view-store';
 import { useT } from '@shared/stores/i18n-store';
 import { Icon } from '@shared/ui/Icon';
+import { useChainName, chainTitle, fmtChain } from '@shared/chains';
 import type { Kind } from '@shared/types';
 
 interface ChipDef {
@@ -125,7 +126,7 @@ export function FilterBar() {
             <FilterChip icon="wallet" label={provenance.wallets[0].name} />
           )}
           {provenance.chainId && (
-            <FilterChip icon="cpu" label={`Chain ${provenance.chainId}`} />
+            <ChainChip chainId={provenance.chainId} />
           )}
         </>
       )}
@@ -133,9 +134,10 @@ export function FilterBar() {
   );
 }
 
-function FilterChip({ icon, label }: { icon: string; label: string }) {
+function FilterChip({ icon, label, title }: { icon: string; label: string; title?: string }) {
   return (
     <div
+      title={title}
       className="inline-flex items-center gap-[5px] cursor-pointer"
       style={{
         padding: '3px 8px',
@@ -148,6 +150,13 @@ function FilterChip({ icon, label }: { icon: string; label: string }) {
       <Icon name={icon} size={12} /> {label}
     </div>
   );
+}
+
+function ChainChip({ chainId }: { chainId: string }) {
+  // Subscribes to the chain catalog so an unknown chainId re-renders
+  // once chainlist.org's data lands in cache.
+  useChainName(chainId);
+  return <FilterChip icon="cpu" label={fmtChain(chainId, 'name')} title={chainTitle(chainId)} />;
 }
 
 function safeHost(url: string): string {

@@ -7,6 +7,7 @@ import { useSettingsStore } from '@shared/stores/settings-store';
 import { useT } from '@shared/stores/i18n-store';
 import { Mascot } from '@shared/ui/Mascot';
 import { Icon } from '@shared/ui/Icon';
+import { useChainName, chainTitle, fmtChain } from '@shared/chains';
 
 const APP_VERSION = chrome.runtime?.getManifest?.()?.version ?? '0.1.0';
 
@@ -195,6 +196,11 @@ function TabCard({
 }) {
   const t = useT();
   const host = safeHost(url);
+  // Trigger chain catalog hydration when a name is unknown — stays
+  // null on miss so unknown chains keep showing the raw hex below.
+  useChainName(chainId);
+  const chainDisplay = chainId === '—' ? '—' : fmtChain(chainId, 'name');
+  const chainTitleAttr = chainId === '—' ? undefined : chainTitle(chainId);
   const subtitle = !inspectable
     ? t('popup.variants.noDapp.hint')
     : detected
@@ -249,17 +255,17 @@ function TabCard({
         style={{ gridTemplateColumns: '1fr 1fr', borderTop: '1px solid rgb(var(--border-soft))' }}
       >
         <StatCell icon="wallet" label={t('popup.provider')} value={wallet} muted={!detected} />
-        <StatCell icon="cpu" label={t('popup.chain')} value={chainId} muted={!detected} />
+        <StatCell icon="cpu" label={t('popup.chain')} value={chainDisplay} title={chainTitleAttr} muted={!detected} />
       </div>
     </div>
   );
 }
 
-function StatCell({ icon, label, value, muted }: {
-  icon: string; label: string; value: string; muted?: boolean;
+function StatCell({ icon, label, value, title, muted }: {
+  icon: string; label: string; value: string; title?: string; muted?: boolean;
 }) {
   return (
-    <div>
+    <div title={title}>
       <div
         className="flex items-center gap-[5px] uppercase text-[10px] mb-[3px]"
         style={{ color: 'rgb(var(--fg-dim))', letterSpacing: 0.5 }}

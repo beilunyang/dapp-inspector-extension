@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Icon } from '@shared/ui/Icon';
 import type { CapturedCall, CallStatus } from '@shared/types';
 import { useT } from '@shared/stores/i18n-store';
+import { useChainName, chainTitle, fmtChain } from '@shared/chains';
 import { ReplayDialog } from './ReplayDialog';
 import { BlockDialog } from './BlockDialog';
 import { MockDialog } from './MockDialog';
@@ -91,9 +92,7 @@ export function DetailHeader({ call }: { call: CapturedCall }) {
           <Icon name="wallet" size={12} /> {call.providerInfo?.name || '—'}
         </span>
         {call.chainId && (
-          <span className="inline-flex items-center gap-[5px]">
-            <Icon name="cpu" size={12} /> Chain <span className="mono">{call.chainId}</span>
-          </span>
+          <ChainPill chainId={call.chainId} />
         )}
         <span
           className="inline-flex items-center gap-[5px] mono"
@@ -139,6 +138,16 @@ function StatusBadge({ status, mocked }: { status: CallStatus; mocked?: boolean 
     >
       <span className="dot" style={{ width: 5, height: 5, color }} />
       {label}
+    </span>
+  );
+}
+
+function ChainPill({ chainId }: { chainId: string }) {
+  useChainName(chainId);
+  return (
+    <span className="inline-flex items-center gap-[5px]" title={chainTitle(chainId)}>
+      <Icon name="cpu" size={12} />
+      <span className="mono">{fmtChain(chainId, 'name+hex')}</span>
     </span>
   );
 }
