@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
-    "gen:icons": "node scripts/gen-icons.mjs"
+    "gen:icons": "node scripts/gen-icons.mjs",
+    "pack:release": "rm -rf dist && pnpm typecheck && pnpm lint && pnpm test:run && pnpm build && node scripts/pack-release.mjs"
   },
   "dependencies": {
     "@fontsource/inter-tight": "^5.2.7",
