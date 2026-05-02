@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280" width="440" height="280">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"   stop-color="#f5f4fc"/>
-      <stop offset="55%"  stop-color="#e8e3f6"/>
-      <stop offset="100%" stop-color="#dcd6ee"/>
-    </linearGradient>
     <linearGradient id="mascot" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%"   stop-color="#7259d4"/>
       <stop offset="100%" stop-color="#a194f8"/>
@@ -17,8 +12,8 @@
     </linearGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="440" height="280" fill="url(#bg)"/>
+  <!-- Background — flat soft lavender. -->
+  <rect width="440" height="280" fill="#ece8f6"/>
 
   <!-- Subtle decorative dots in the background, hex-grid feel -->
   <g fill="#7259d4" opacity="0.18">
