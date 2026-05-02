@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280" width="440" height="280">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#1c1834"/>
+      <stop offset="55%"  stop-color="#241e44"/>
+      <stop offset="100%" stop-color="#2a2050"/>
+    </linearGradient>
+    <linearGradient id="mascot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#7259d4"/>
+      <stop offset="100%" stop-color="#a194f8"/>
+    </linearGradient>
+    <linearGradient id="accent-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#7259d4" stop-opacity="0"/>
+      <stop offset="20%"  stop-color="#7259d4" stop-opacity="1"/>
+      <stop offset="80%"  stop-color="#a194f8" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#a194f8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="440" height="280" fill="url(#bg)"/>
+
+  <!-- Subtle decorative dots in the background, hex-grid feel -->
+  <g fill="#a194f8" opacity="0.06">
+    <circle cx="380" cy="40"  r="2"/>
+    <circle cx="410" cy="70"  r="2"/>
+    <circle cx="380" cy="100" r="2"/>
+    <circle cx="410" cy="200" r="2"/>
+    <circle cx="380" cy="230" r="2"/>
+    <circle cx="410" cy="260" r="2"/>
+  </g>
+
+  <!-- Mascot: original 96-unit coords copied from public/icons/icon.svg.
+       Scale 1.9 → body ~129px wide, total height ~150px. Centered
+       vertically (top pad = (280 - 150) / 2 - 5*1.9 = 65 - 9.5 ≈ 55). -->
+  <g transform="translate(-7, 55) scale(1.9)">
+    <!-- Antenna -->
+    <path d="M48 18 L48 10" stroke="url(#mascot)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="48" cy="8" r="3" fill="url(#mascot)"/>
+    <!-- Body -->
+    <rect x="14" y="18" width="68" height="66" rx="22" fill="url(#mascot)"/>
+    <!-- Eye sclera -->
+    <circle cx="36" cy="46" r="6.5" fill="#ffffff"/>
+    <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+    <!-- Pupils (matches the dark bg color so the eyes feel "lit") -->
+    <circle cx="38" cy="47" r="2.8" fill="#1c1834"/>
+    <circle cx="62" cy="47" r="2.8" fill="#1c1834"/>
+    <!-- Smile -->
+    <path d="M38 62 Q48 68 58 62" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Text block, right of the mascot. Helvetica/Arial fallback so the
+       SVG rasterises consistently on macOS / Linux / Windows. Layout
+       budget: x=170 to x=425 = 255px. "DApp Inspector" at font-size
+       28 ≈ 235px wide, fits with breathing room. -->
+  <g font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif">
+    <!-- Wordmark -->
+    <text x="170" y="130" font-size="28" font-weight="700" fill="#ffffff" letter-spacing="-0.4">DApp Inspector</text>
+
+    <!-- Accent underline -->
+    <rect x="170" y="142" width="70" height="2.5" rx="1.25" fill="url(#accent-line)"/>
+
+    <!-- Tagline -->
+    <text x="170" y="172" font-size="13" font-weight="500" fill="#cdc5f6" letter-spacing="0.2">Web3 RPC traffic inspector</text>
+    <text x="170" y="190" font-size="11" font-weight="400" fill="#8e87b8" letter-spacing="0.3">Chrome DevTools · decode · replay · mock</text>
+  </g>
+
+  <!-- Tiny brand corner stamp -->
+  <text x="420" y="265"
+        font-family="'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace"
+        font-size="9" fill="#5e5882" letter-spacing="0.6"
+        text-anchor="end">EVM · OPEN SOURCE</text>
+</svg>
