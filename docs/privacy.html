@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — DApp Inspector</title>
+  <meta name="description" content="Privacy policy for the DApp Inspector Chrome extension. Local-first developer tool — no analytics, no telemetry, no accounts." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://beilunyang.github.io/dapp-inspector-extension/privacy.html" />
+  <style>
+    :root {
+      --bg: #0f0d1f;
+      --panel: #1c1834;
+      --panel-2: #25204a;
+      --text: #e8e6f5;
+      --muted: #aaa3c8;
+      --accent: #a194f8;
+      --accent-2: #7259d4;
+      --border: rgba(161, 148, 248, 0.18);
+      --code-bg: rgba(161, 148, 248, 0.10);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #fbfaff;
+        --panel: #ffffff;
+        --panel-2: #f3f0ff;
+        --text: #1c1834;
+        --muted: #5b5680;
+        --accent: #7259d4;
+        --accent-2: #5b3fc0;
+        --border: rgba(114, 89, 212, 0.18);
+        --code-bg: rgba(114, 89, 212, 0.08);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter Tight", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 24px 96px;
+    }
+    header.brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    header.brand .logo {
+      width: 48px; height: 48px;
+      display: grid; place-items: center;
+      filter: drop-shadow(0 4px 16px rgba(114, 89, 212, 0.35));
+    }
+    header.brand .logo svg { width: 100%; height: 100%; display: block; }
+    header.brand .name {
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+    header.brand .tag {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    h1 {
+      font-size: 32px;
+      line-height: 1.2;
+      margin: 0 0 12px;
+      letter-spacing: -0.01em;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .meta b { color: var(--text); font-weight: 600; }
+    h2 {
+      font-size: 20px;
+      margin: 40px 0 12px;
+      letter-spacing: -0.005em;
+    }
+    p, li { color: var(--text); }
+    ul { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+    a:hover { border-bottom-color: var(--accent); }
+    code {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: var(--panel-2);
+      font-weight: 600;
+      color: var(--text);
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    .callout {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .callout b { color: var(--text); }
+    footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="6 3 84 84">
+          <defs>
+            <linearGradient id="brandLogoGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stop-color="#7259d4"/>
+              <stop offset="100%" stop-color="#a194f8"/>
+            </linearGradient>
+          </defs>
+          <path d="M48 18 L48 10" stroke="url(#brandLogoGradient)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="48" cy="8" r="3" fill="url(#brandLogoGradient)"/>
+          <rect x="14" y="18" width="68" height="66" rx="22" fill="url(#brandLogoGradient)"/>
+          <circle cx="36" cy="46" r="6.5" fill="#ffffff"/>
+          <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+          <circle cx="38" cy="47" r="2.8" fill="#1c1834"/>
+          <circle cx="62" cy="47" r="2.8" fill="#1c1834"/>
+          <path d="M38 62 Q48 68 58 62" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      </span>
+      <div>
+        <div class="name">DApp Inspector</div>
+        <div class="tag">Local-first Web3 RPC inspector for Chrome</div>
+      </div>
+    </header>
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">
+      <b>Last updated:</b> 2026-05-02 &nbsp;·&nbsp;
+      <b>Extension:</b> DApp Inspector &nbsp;·&nbsp;
+      <b>Maintainer:</b> beilunyang
+    </p>
+
+    <h2>Summary</h2>
+    <p>
+      DApp Inspector is a local-first developer tool. We do not run a backend,
+      we do not have user accounts, and we do not collect, transmit, or share
+      any user data with parties under our control.
+    </p>
+
+    <h2>What the extension stores</h2>
+    <p>
+      All data lives in your browser's local storage (<code>chrome.storage.local</code>
+      and IndexedDB on your device):
+    </p>
+    <ul>
+      <li><b>Settings</b> — theme, language, capture toggle, retention cap, auto-fetch ABI toggle, accent color.</li>
+      <li><b>Captured RPC calls</b> — method, parameters, result, error, latency, origin, chain id, timestamps.</li>
+      <li><b>Mock and Block rules</b> — user-authored rule definitions.</li>
+      <li><b>Local ABI cache</b> — function signatures fetched from public ABI databases (see <em>Outbound network requests</em> below), keyed by chain id and contract address, with a 7-day TTL.</li>
+      <li><b>Local chain catalog cache</b> — chainId → human-readable name mapping fetched once and cached for 30 days.</li>
+    </ul>
+    <p>
+      Captured data is never transmitted off your device by this extension.
+      You can clear it at any time via
+      <b>Settings → Advanced → Clear all history</b> and <b>Clear ABI cache</b>.
+    </p>
+
+    <h2>Outbound network requests</h2>
+    <p>
+      The extension makes anonymous, unauthenticated <code>GET</code> requests to a small
+      set of public registries to enrich the inspector view:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Host</th><th>When</th><th>Purpose</th><th>Data sent</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>sourcify.dev</code></td>
+            <td>When you open the Decoded tab on a call to a contract whose ABI is not in the local 7-day cache</td>
+            <td>Look up the contract's verified ABI by <code>(chainId, address)</code></td>
+            <td>The chainId (e.g. <code>1</code>) and contract address (e.g. <code>0xE592…1564</code>) — both already public on chain. No browser identifiers, cookies, headers, or user data.</td>
+          </tr>
+          <tr>
+            <td><code>api.4byte.sourcify.dev</code></td>
+            <td>When the Sourcify lookup misses, on the same trigger</td>
+            <td>Resolve a 4-byte function selector to its text signature</td>
+            <td>The 4-byte selector (e.g. <code>0xa9059cbb</code>) — already publicly observable as the first 4 bytes of any tx calldata.</td>
+          </tr>
+          <tr>
+            <td><code>chainid.network</code></td>
+            <td>First time the extension encounters a chainId not in its built-in 24-chain seed map, then once every 30 days to refresh</td>
+            <td>Map chainIds to human-readable chain names</td>
+            <td>None — fetches the full public catalog as a single static JSON file.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      You can disable Sourcify and 4byte lookups entirely via
+      <b>Settings → Capture → Auto-fetch ABI</b> (off). The extension will still
+      function using the bundled built-in ABIs for ERC-20/721/1155/Permit2.
+    </p>
+
+    <h2>What we do <em>not</em> collect</h2>
+    <ul>
+      <li>We do not have analytics, telemetry, crash reporting, or any other phone-home behavior.</li>
+      <li>We do not read DOM content, cookies, localStorage, form fields, passwords, or session storage from any page.</li>
+      <li>We do not transmit private keys, mnemonics, or any wallet credentials. The extension only observes the public RPC method calls already passing between the page and the wallet — it does not have access to wallet internals.</li>
+      <li>We do not sell, rent, or transfer any user data to third parties.</li>
+    </ul>
+
+    <h2>Permissions</h2>
+    <p>
+      See the <em>Permissions Justification</em> section of the Chrome Web Store
+      listing or
+      <a href="https://github.com/beilunyang/dapp-inspector-extension/blob/main/docs/store/permissions.md"><code>docs/store/permissions.md</code></a>
+      in the source repository for the per-permission rationale.
+    </p>
+
+    <h2>Source code</h2>
+    <p>
+      DApp Inspector is open source. The full implementation is available at
+      <a href="https://github.com/beilunyang/dapp-inspector-extension">github.com/beilunyang/dapp-inspector-extension</a>.
+      You are encouraged to audit the network code paths
+      (<code>src/shared/abi/sourcify.ts</code>, <code>src/shared/abi/fourbyte.ts</code>,
+      <code>src/shared/chains.ts</code>) and confirm the claims above.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions or concerns about privacy: please
+      <a href="https://github.com/beilunyang/dapp-inspector-extension/issues">open an issue</a>
+      at the GitHub repository linked above.
+    </p>
+
+    <h2>Changes to this policy</h2>
+    <p>
+      Material changes will be reflected in this document and announced via the
+      GitHub releases page. Continued use of the extension after such changes
+      constitutes acceptance.
+    </p>
+
+    <footer>
+      <span>© 2026 beilunyang · DApp Inspector</span>
+      <span><a href="https://github.com/beilunyang/dapp-inspector-extension">Source on GitHub</a></span>
+    </footer>
+  </main>
+</body>
+</html>
