@@ -30,4 +30,31 @@ describe('settings', () => {
     expect(s.retentionMax).toBe(1000);
     expect(s.monitoring).toBe(DEFAULT_SETTINGS.monitoring);
   });
+
+  it('first install picks zh when chrome.i18n.getUILanguage returns zh-CN', async () => {
+    (globalThis as { chrome: typeof chrome }).chrome.i18n = {
+      getUILanguage: () => 'zh-CN',
+    } as unknown as typeof chrome.i18n;
+    const s = await loadSettings();
+    expect(s.lang).toBe('zh');
+  });
+
+  it('first install picks en when browser locale is non-Chinese', async () => {
+    (globalThis as { chrome: typeof chrome }).chrome.i18n = {
+      getUILanguage: () => 'fr-FR',
+    } as unknown as typeof chrome.i18n;
+    const s = await loadSettings();
+    expect(s.lang).toBe('en');
+  });
+
+  it("user's saved lang choice overrides browser detection", async () => {
+    // Simulate a Chinese browser
+    (globalThis as { chrome: typeof chrome }).chrome.i18n = {
+      getUILanguage: () => 'zh-CN',
+    } as unknown as typeof chrome.i18n;
+    // But the user manually saved English in a previous session
+    await saveSetting('lang', 'en');
+    const s = await loadSettings();
+    expect(s.lang).toBe('en');
+  });
 });

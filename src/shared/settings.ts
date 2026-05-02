@@ -16,9 +16,30 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const KEY = 'dapp-inspector:settings';
 
+/** First-install language pick: read the browser's UI locale and map it
+ *  to one of our supported langs. After the user's first manual save,
+ *  the value in storage takes precedence (see loadSettings spread order)
+ *  so manual switches are respected indefinitely. */
+function detectBrowserLang(): Settings['lang'] {
+  try {
+    const ui = chrome.i18n?.getUILanguage?.() ?? '';
+    return ui.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
 export async function loadSettings(): Promise<Settings> {
   const res = await chrome.storage.local.get(KEY);
-  return { ...DEFAULT_SETTINGS, ...(res[KEY] ?? {}) };
+  const stored = (res[KEY] ?? {}) as Partial<Settings>;
+  // Browser-detected lang is the *default* — any value the user has
+  // explicitly saved (in `stored`) trumps it because `...stored` spreads
+  // last and overwrites.
+  return {
+    ...DEFAULT_SETTINGS,
+    lang: detectBrowserLang(),
+    ...stored,
+  };
 }
 
 export async function saveSetting<K extends keyof Settings>(
