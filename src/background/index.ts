@@ -158,7 +158,12 @@ chrome.alarms?.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onInstalled.addListener((d) => {
-  if (d.reason === 'install') chrome.runtime.openOptionsPage();
+  if (d.reason !== 'install') return;
+  // tabs.create instead of openOptionsPage: the latter can replace a
+  // freshly-created about:blank tab via Chrome's NTP optimization,
+  // pre-empting concurrent navigations in newly-launched contexts (E2E race).
+  const optionsPath = chrome.runtime.getManifest().options_ui?.page;
+  if (optionsPath) chrome.tabs.create({ url: chrome.runtime.getURL(optionsPath) });
 });
 
 function safeOrigin(url: string): string {
