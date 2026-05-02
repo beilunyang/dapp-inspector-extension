@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 560" width="1400" height="560">
+  <defs>
+    <linearGradient id="mascot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#7259d4"/>
+      <stop offset="100%" stop-color="#a194f8"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="accent-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#7259d4" stop-opacity="0"/>
+      <stop offset="20%"  stop-color="#7259d4" stop-opacity="1"/>
+      <stop offset="80%"  stop-color="#a194f8" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#a194f8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Flat lavender, same as the small promo + hero so the listing
+       reads as one cohesive brand. -->
+  <rect width="1400" height="560" fill="#ece8f6"/>
+
+  <!-- Subtle hex-grid dots in the corners -->
+  <g fill="#7259d4" opacity="0.08">
+    <circle cx="60"   cy="60"  r="3"/>
+    <circle cx="120"  cy="100" r="3"/>
+    <circle cx="60"   cy="140" r="3"/>
+    <circle cx="1340" cy="60"  r="3"/>
+    <circle cx="1280" cy="100" r="3"/>
+    <circle cx="1340" cy="140" r="3"/>
+    <circle cx="1340" cy="420" r="3"/>
+    <circle cx="1280" cy="460" r="3"/>
+    <circle cx="1340" cy="500" r="3"/>
+    <circle cx="60"   cy="420" r="3"/>
+    <circle cx="120"  cy="460" r="3"/>
+    <circle cx="60"   cy="500" r="3"/>
+  </g>
+
+  <!-- ==============================================
+       LEFT: Mascot (scale 4.0 → ~316px total height,
+       vertically centered with top pad = 122)
+       ============================================== -->
+  <g transform="translate(64, 102) scale(4)">
+    <path d="M48 18 L48 10" stroke="url(#mascot)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="48" cy="8" r="3" fill="url(#mascot)"/>
+    <rect x="14" y="18" width="68" height="66" rx="22" fill="url(#mascot)"/>
+    <circle cx="36" cy="46" r="6.5" fill="#ffffff"/>
+    <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+    <circle cx="38" cy="47" r="2.8" fill="#1c1834"/>
+    <circle cx="62" cy="47" r="2.8" fill="#1c1834"/>
+    <path d="M38 62 Q48 68 58 62" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- ==============================================
+       MIDDLE: brand wordmark + tagline
+       ============================================== -->
+  <g font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif">
+    <!-- Wordmark — big enough to read when CWS scales the marquee
+         down to ~800px wide on smaller displays. -->
+    <text x="460" y="245" font-size="92" font-weight="700"
+          fill="#1c1834" letter-spacing="-2.5">DApp Inspector</text>
+
+    <!-- Accent underline -->
+    <rect x="463" y="262" width="180" height="3" rx="1.5" fill="url(#accent-line)"/>
+
+    <!-- Tagline -->
+    <text x="463" y="312" font-size="30" font-weight="500"
+          fill="#4a3f8a" letter-spacing="-0.2">Audit every wallet popup before you sign.</text>
+
+    <!-- Subtitle -->
+    <text x="463" y="346" font-size="18" font-weight="400"
+          fill="#7e75aa" letter-spacing="0.3">Web3 RPC traffic inspector for Chrome DevTools · EVM</text>
+  </g>
+
+  <!-- ==============================================
+       BOTTOM-RIGHT: feature pill row
+       Pills sit at y=395..475, total span 460..1340 = 880 wide.
+       ============================================== -->
+  <g font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif">
+
+    <!-- LIVE -->
+    <g transform="translate(460, 395)">
+      <rect width="200" height="80" rx="12" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="16" y="34" font-size="13" font-weight="700" fill="#7259d4" letter-spacing="1.4">LIVE</text>
+      <text x="16" y="62" font-size="17" font-weight="600" fill="#1c1834">Capture · Decode</text>
+    </g>
+
+    <!-- RISK -->
+    <g transform="translate(680, 395)">
+      <rect width="200" height="80" rx="12" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="16" y="34" font-size="13" font-weight="700" fill="#c28b3f" letter-spacing="1.4">RISK</text>
+      <text x="16" y="62" font-size="17" font-weight="600" fill="#1c1834">Pre-sign warnings</text>
+    </g>
+
+    <!-- REPLAY -->
+    <g transform="translate(900, 395)">
+      <rect width="200" height="80" rx="12" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="16" y="34" font-size="13" font-weight="700" fill="#7259d4" letter-spacing="1.4">REPLAY</text>
+      <text x="16" y="62" font-size="17" font-weight="600" fill="#1c1834">One-click re-fire</text>
+    </g>
+
+    <!-- MOCK -->
+    <g transform="translate(1120, 395)">
+      <rect width="200" height="80" rx="12" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="16" y="34" font-size="13" font-weight="700" fill="#7259d4" letter-spacing="1.4">MOCK · BLOCK</text>
+      <text x="16" y="62" font-size="17" font-weight="600" fill="#1c1834">Test states offline</text>
+    </g>
+
+  </g>
+
+  <!-- Bottom corner privacy/source note -->
+  <text x="700" y="525" text-anchor="middle"
+        font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif"
+        font-size="14" fill="#7e75aa" letter-spacing="0.3">
+    Local-first · No analytics · Open source
+  </text>
+
+  <!-- Top-right corner stamp -->
+  <text x="1340" y="48" text-anchor="end"
+        font-family="'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace"
+        font-size="11" fill="#7e75aa" letter-spacing="1">EVM · v0.1</text>
+</svg>
