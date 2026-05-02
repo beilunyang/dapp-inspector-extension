@@ -1,11 +1,13 @@
-// Rasterise docs/store/assets/promo-440x280.svg → docs/store/assets/promo-440x280.png
-// for upload to the Chrome Web Store "Small promo tile" field.
+// Rasterise every SVG in docs/store/assets/ to a sibling PNG at the
+// dimensions encoded in the file name (e.g. promo-440x280.svg →
+// promo-440x280.png at 440×280, hero-1280x800.svg → hero-1280x800.png
+// at 1280×800).
 //
 // Run: pnpm gen:promo
 //
-// Sharp's underlying librsvg renders <text> against system fonts, so the
-// output may shift slightly across machines. Re-run on the machine you'll
-// upload from for crispest results.
+// Sharp's underlying librsvg renders <text> against system fonts, so
+// the output may shift slightly across machines. Re-run on the machine
+// you'll upload from for the crispest output.
 
 import sharp from 'sharp';
 import fs from 'node:fs/promises';
@@ -14,17 +16,32 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const SRC = path.join(ROOT, 'docs/store/assets/promo-440x280.svg');
-const OUT = path.join(ROOT, 'docs/store/assets/promo-440x280.png');
+const ASSETS = path.join(ROOT, 'docs/store/assets');
 
-const svg = await fs.readFile(SRC);
+const entries = await fs.readdir(ASSETS);
+const targets = entries.filter((f) => f.endsWith('.svg') && /-\d+x\d+\.svg$/.test(f));
 
-// density=288 → 2× the natural 144 dpi, gives sharper rasterisation when
-// fit:'fill' resamples down to the final 440×280 PNG.
-await sharp(svg, { density: 288 })
-  .resize(440, 280, { fit: 'fill' })
-  .png({ compressionLevel: 9 })
-  .toFile(OUT);
+if (targets.length === 0) {
+  console.error('✗ no <name>-WIDTHxHEIGHT.svg files found in docs/store/assets/');
+  process.exit(1);
+}
 
-const stat = await fs.stat(OUT);
-console.log(`✓ ${path.relative(ROOT, OUT)} (${(stat.size / 1024).toFixed(1)} KB, 440×280)`);
+for (const name of targets) {
+  const m = /-(\d+)x(\d+)\.svg$/.exec(name);
+  if (!m) continue;
+  const width = Number(m[1]);
+  const height = Number(m[2]);
+  const src = path.join(ASSETS, name);
+  const out = path.join(ASSETS, name.replace(/\.svg$/, '.png'));
+  const svg = await fs.readFile(src);
+
+  // 2× density gives crisp downsampling when fit:'fill' resamples to
+  // the final exact pixel dimensions.
+  await sharp(svg, { density: 288 })
+    .resize(width, height, { fit: 'fill' })
+    .png({ compressionLevel: 9 })
+    .toFile(out);
+
+  const size = (await fs.stat(out)).size;
+  console.log(`✓ ${path.relative(ROOT, out)} (${(size / 1024).toFixed(1)} KB, ${width}×${height})`);
+}
