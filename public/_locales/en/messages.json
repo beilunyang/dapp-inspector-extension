@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "DApp Inspector",
+    "description": "Display name shown in chrome://extensions, the Chrome Web Store, and the toolbar tooltip."
+  },
+  "extDesc": {
+    "message": "Inspect, decode, replay, and mock RPC traffic between Web3 DApps and wallets — right inside Chrome DevTools.",
+    "description": "Short description (≤132 chars) shown next to the extension name in chrome://extensions and store listings."
+  }
+}

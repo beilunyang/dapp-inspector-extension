@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "DApp Inspector",
+    "description": "Display name. Kept as the English brand mark in zh_CN to avoid maintaining two brand identities; descriptive text below carries the localization."
+  },
+  "extDesc": {
+    "message": "在 Chrome DevTools 里捕获、解码、重放、模拟 Web3 DApp 与钱包之间的 RPC 通信。",
+    "description": "Short description (≤132 chars). Surfaces in chrome://extensions and Chrome Web Store listings for zh_CN users."
+  }
+}

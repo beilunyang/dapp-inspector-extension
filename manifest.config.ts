@@ -3,8 +3,12 @@ import pkg from './package.json';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'DApp Inspector',
-  description: 'Inspect RPC traffic between DApps and Web3 wallets.',
+  // Localized name + description — Chrome substitutes these from
+  // _locales/<lang>/messages.json based on the user's UI language.
+  // Falls back to default_locale when the user's locale isn't shipped.
+  default_locale: 'en',
+  name: '__MSG_extName__',
+  description: '__MSG_extDesc__',
   version: pkg.version,
   icons: {
     16: 'public/icons/16.png',
