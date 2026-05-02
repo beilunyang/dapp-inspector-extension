@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" width="1280" height="800">
+  <defs>
+    <linearGradient id="mascot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#7259d4"/>
+      <stop offset="100%" stop-color="#a194f8"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base background — same flat lavender as the small promo tile. -->
+  <rect width="1280" height="800" fill="#ece8f6"/>
+
+  <!-- Background hex-grid dots (very subtle) -->
+  <g fill="#7259d4" opacity="0.08">
+    <circle cx="80"   cy="80"  r="3"/>
+    <circle cx="160"  cy="120" r="3"/>
+    <circle cx="80"   cy="160" r="3"/>
+    <circle cx="1200" cy="80"  r="3"/>
+    <circle cx="1120" cy="120" r="3"/>
+    <circle cx="1200" cy="160" r="3"/>
+    <circle cx="1200" cy="640" r="3"/>
+    <circle cx="1120" cy="680" r="3"/>
+    <circle cx="1200" cy="720" r="3"/>
+    <circle cx="80"   cy="640" r="3"/>
+    <circle cx="160"  cy="680" r="3"/>
+    <circle cx="80"   cy="720" r="3"/>
+  </g>
+
+  <!-- ==============================================
+       LEFT: oversized mascot
+       ============================================== -->
+  <g transform="translate(80, 200) scale(4)">
+    <path d="M48 18 L48 10" stroke="url(#mascot)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="48" cy="8" r="3" fill="url(#mascot)"/>
+    <rect x="14" y="18" width="68" height="66" rx="22" fill="url(#mascot)"/>
+    <circle cx="36" cy="46" r="6.5" fill="#ffffff"/>
+    <circle cx="60" cy="46" r="6.5" fill="#ffffff"/>
+    <circle cx="38" cy="47" r="2.8" fill="#1c1834"/>
+    <circle cx="62" cy="47" r="2.8" fill="#1c1834"/>
+    <path d="M38 62 Q48 68 58 62" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- ==============================================
+       RIGHT: title + tagline + feature list
+       ============================================== -->
+  <g font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif">
+    <!-- Wordmark -->
+    <text x="540" y="270" font-size="80" font-weight="700" fill="#1c1834" letter-spacing="-2">DApp Inspector</text>
+
+    <!-- Tagline -->
+    <text x="544" y="320" font-size="26" font-weight="500" fill="#4a3f8a" letter-spacing="-0.2">Audit every wallet popup before you sign.</text>
+
+    <!-- Subtitle / scope -->
+    <text x="544" y="356" font-size="18" font-weight="400" fill="#7e75aa" letter-spacing="0.3">Web3 RPC traffic inspector for Chrome DevTools · EVM</text>
+  </g>
+
+  <!-- ==============================================
+       FEATURE PILLS (4 cards)
+       ============================================== -->
+  <g font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif">
+
+    <!-- Card 1: live capture -->
+    <g transform="translate(540, 430)">
+      <rect width="320" height="120" rx="14" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="20" y="36" font-size="14" font-weight="700" fill="#7259d4" letter-spacing="1.2">LIVE</text>
+      <text x="20" y="68" font-size="20" font-weight="600" fill="#1c1834">Captures every RPC call</text>
+      <text x="20" y="94" font-size="13" font-weight="400" fill="#7e75aa">eth_call · sendTransaction · signTypedData_v4 · …</text>
+    </g>
+
+    <!-- Card 2: decode -->
+    <g transform="translate(880, 430)">
+      <rect width="320" height="120" rx="14" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="20" y="36" font-size="14" font-weight="700" fill="#7259d4" letter-spacing="1.2">DECODE</text>
+      <text x="20" y="68" font-size="20" font-weight="600" fill="#1c1834">Calldata → readable</text>
+      <text x="20" y="94" font-size="13" font-weight="400" fill="#7e75aa">Sourcify + 4byte, with named arguments</text>
+    </g>
+
+    <!-- Card 3: risk -->
+    <g transform="translate(540, 570)">
+      <rect width="320" height="120" rx="14" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="20" y="36" font-size="14" font-weight="700" fill="#c28b3f" letter-spacing="1.2">RISK</text>
+      <text x="20" y="68" font-size="20" font-weight="600" fill="#1c1834">Warns before you sign</text>
+      <text x="20" y="94" font-size="13" font-weight="400" fill="#7e75aa">Unlimited approval · setApprovalForAll · large value</text>
+    </g>
+
+    <!-- Card 4: replay/mock/block -->
+    <g transform="translate(880, 570)">
+      <rect width="320" height="120" rx="14" fill="url(#card)" stroke="#d6cef0" stroke-width="1"/>
+      <text x="20" y="36" font-size="14" font-weight="700" fill="#7259d4" letter-spacing="1.2">REPLAY · MOCK · BLOCK</text>
+      <text x="20" y="68" font-size="20" font-weight="600" fill="#1c1834">Test states, no chain</text>
+      <text x="20" y="94" font-size="13" font-weight="400" fill="#7e75aa">Re-fire calls, fake responses, throttle latency</text>
+    </g>
+
+  </g>
+
+  <!-- Bottom-corner privacy note -->
+  <text x="640" y="754" text-anchor="middle"
+        font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif"
+        font-size="14" fill="#7e75aa" letter-spacing="0.3">
+    Local-first · No analytics · Open source
+  </text>
+</svg>
