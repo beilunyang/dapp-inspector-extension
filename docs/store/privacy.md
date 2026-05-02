@@ -1,6 +1,6 @@
 # Privacy Policy
 
-> **Note:** Chrome Web Store requires a publicly-hosted URL pointing to this policy. The simplest setup is to push this repo to GitHub and enable GitHub Pages — the file then resolves at `https://beilunyang.github.io/dapp-inspector/privacy.html` (or wherever you host it). Alternatively render this Markdown to a Gist and use the Gist's raw URL.
+> **Note:** Chrome Web Store requires a publicly-hosted URL pointing to this policy. The simplest setup is to push this repo to GitHub and enable GitHub Pages — the file then resolves at `https://beilunyang.github.io/dapp-inspector-extension/privacy.html` (or wherever you host it). Alternatively render this Markdown to a Gist and use the Gist's raw URL.
 
 **Last updated:** 2026-05-02
 **Extension:** DApp Inspector
@@ -49,7 +49,7 @@ See the *Permissions Justification* section of the Chrome Web Store listing or `
 
 DApp Inspector is open source. The full implementation is available at:
 
-  https://github.com/beilunyang/dapp-inspector
+  https://github.com/beilunyang/dapp-inspector-extension
 
 You are encouraged to audit the network code paths (`src/shared/abi/sourcify.ts`, `src/shared/abi/fourbyte.ts`, `src/shared/chains.ts`) and confirm the claims above.
 
