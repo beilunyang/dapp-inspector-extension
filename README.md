@@ -7,6 +7,7 @@
     <a href="https://github.com/beilunyang/dapp-inspector-extension/actions/workflows/build.yml"><img alt="build" src="https://github.com/beilunyang/dapp-inspector-extension/actions/workflows/build.yml/badge.svg"></a>
     <img alt="manifest v3" src="https://img.shields.io/badge/manifest-v3-8957e5">
     <img alt="chains" src="https://img.shields.io/badge/chain-EVM-627eea">
+    <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-1f883d"></a>
   </p>
   <p>English · <a href="README.zh-CN.md">中文</a></p>
 </div>
