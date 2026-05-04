@@ -1,5 +1,9 @@
 # DApp Inspector P0 Implementation Plan
 
+> **Status: COMPLETED.** This plan was used to bootstrap the project from an empty repo through P0 in late April 2026. The build is done — **do NOT execute the steps below again**. They're kept as the historical record of how P0 was assembled and may not match the current source layout (e.g. Mock / Replay / Block, ABI decode, chain catalog all landed after this plan). The live structure is summarised in `CLAUDE.md` at the repo root.
+>
+> For new feature work, write a fresh plan under `docs/superpowers/plans/<YYYY-MM-DD>-<feature>.md` rather than amending this one.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a Chrome MV3 extension that captures DApp ↔ wallet RPC traffic, with DevTools panel, Popup, Options, and Inspector full-page surfaces. P0 scope — Mock/Replay/Block buttons render but are disabled.

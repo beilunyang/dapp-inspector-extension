@@ -1,5 +1,7 @@
 # P0 Acceptance Checklist
 
+> **Status: COMPLETED for the 0.1.0 tag.** Kept as a template — copy & rename for future release gates.
+
 Run through this before cutting the 0.1.0 tag.
 
 ## Real DApps
