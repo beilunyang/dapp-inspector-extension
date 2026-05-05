@@ -9,6 +9,7 @@
     <img alt="chains" src="https://img.shields.io/badge/chain-EVM-627eea">
     <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-1f883d"></a>
   </p>
+  <p><strong>Site:</strong> <a href="https://dapp-inspector.chain.moe">dapp-inspector.chain.moe</a> · <strong>Privacy:</strong> <a href="https://dapp-inspector.chain.moe/privacy.html">dapp-inspector.chain.moe/privacy.html</a></p>
   <p>English · <a href="README.zh-CN.md">中文</a></p>
 </div>
 

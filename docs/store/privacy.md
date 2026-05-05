@@ -1,6 +1,6 @@
 # Privacy Policy
 
-> **Note:** Chrome Web Store requires a publicly-hosted URL pointing to this policy. The simplest setup is to push this repo to GitHub and enable GitHub Pages — the file then resolves at `https://beilunyang.github.io/dapp-inspector-extension/privacy.html` (or wherever you host it). Alternatively render this Markdown to a Gist and use the Gist's raw URL.
+> **Note:** Chrome Web Store requires a publicly-hosted URL pointing to this policy. The published copy is at `https://dapp-inspector.chain.moe/privacy.html`, served from `site/privacy.html` via Cloudflare Pages.
 
 **Last updated:** 2026-05-02
 **Extension:** DApp Inspector
