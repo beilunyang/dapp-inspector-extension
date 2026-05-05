@@ -16,6 +16,7 @@
     "gen:icons": "node scripts/gen-icons.mjs",
     "gen:promo": "node scripts/gen-promo.mjs",
     "gen:screenshots": "node scripts/gen-screenshots.mjs",
+    "gen:locales": "node scripts/gen-locales.mjs",
     "pack:release": "rm -rf dist && pnpm typecheck && pnpm lint && pnpm test:run && pnpm build && node scripts/pack-release.mjs"
   },
   "dependencies": {

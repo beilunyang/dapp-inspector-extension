@@ -1,0 +1,2318 @@
+<!doctype html>
+<html class="theme-light" lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>DApp Inspector — Wireshark for window.ethereum</title>
+  <meta name="description" content="Inspect, replay and mock the wire-level traffic between any DApp and an injected web3 wallet — without touching their code. Local-first Chrome extension. Apache 2.0." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://beilunyang.github.io/dapp-inspector-extension/" />
+  <link rel="alternate" hreflang="en"        href="https://beilunyang.github.io/dapp-inspector-extension/en/" />
+  <link rel="alternate" hreflang="zh-Hans"   href="https://beilunyang.github.io/dapp-inspector-extension/zh/" />
+  <link rel="alternate" hreflang="x-default" href="https://beilunyang.github.io/dapp-inspector-extension/" />
+  <meta property="og:title" content="DApp Inspector — Wireshark for window.ethereum" />
+  <meta property="og:description" content="Inspect, replay and mock every JSON-RPC call between your DApp and the wallet. Local-first. Apache 2.0." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#fbfaff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#181a1f" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96' fill='none' stroke='black' stroke-width='8' stroke-linejoin='miter' stroke-linecap='square'><path d='M48 6 L82 25 L82 63 L48 82 L14 63 L14 25 Z'/><circle cx='42' cy='40' r='13' stroke-width='8'/><path d='M52 50 L68 66' stroke-width='8'/></svg>" />
+
+  <style>
+    /* ================================================================
+       DApp Inspector landing — Variation C, brutalist editorial mono.
+       Self-contained: no build step, no external JS deps.
+       Tokens ported from project/theme.css; layout from project/site/var-c.css.
+       Default surface: theme-light + violet accent + zh + hero alt2.
+       =============================================================== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    :root,
+    .theme-dark {
+      --bg:            oklch(0.18 0.008 250);
+      --surface:       oklch(0.215 0.008 250);
+      --surface-2:     oklch(0.255 0.008 250);
+      --surface-hi:    oklch(0.295 0.008 250);
+      --border:        oklch(0.315 0.008 250);
+      --border-soft:   oklch(0.265 0.008 250);
+
+      --fg:            oklch(0.96 0.005 250);
+      --fg-muted:      oklch(0.72 0.008 250);
+      --fg-dim:        oklch(0.55 0.008 250);
+
+      /* violet accent (dark variant) */
+      --accent:        oklch(0.75 0.18 290);
+      --accent-2:      oklch(0.70 0.17 270);
+      --accent-soft:   color-mix(in oklab, var(--accent) 18%, transparent);
+      --accent-fg:     oklch(0.18 0.02 250);
+
+      --amber:         oklch(0.78 0.14 75);
+      --violet:        oklch(0.75 0.14 300);
+      --red:           oklch(0.68 0.18 22);
+      --green:         oklch(0.75 0.14 155);
+    }
+
+    .theme-light {
+      --bg:            oklch(0.995 0.002 250);
+      --surface:       oklch(0.985 0.002 250);
+      --surface-2:     oklch(0.965 0.002 250);
+      --surface-hi:    oklch(0.935 0.003 250);
+      --border:        oklch(0.89 0.004 250);
+      --border-soft:   oklch(0.935 0.003 250);
+
+      --fg:            oklch(0.22 0.01 250);
+      --fg-muted:      oklch(0.45 0.01 250);
+      --fg-dim:        oklch(0.62 0.008 250);
+
+      /* violet accent (light variant) */
+      --accent:        oklch(0.55 0.20 290);
+      --accent-2:      oklch(0.55 0.18 285);
+      --accent-soft:   color-mix(in oklab, var(--accent) 14%, transparent);
+      --accent-fg:     oklch(0.99 0.005 250);
+
+      --amber:         oklch(0.60 0.16 60);
+      --violet:        oklch(0.55 0.20 300);
+      --red:           oklch(0.58 0.20 22);
+      --green:         oklch(0.58 0.15 150);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--fg);
+      font-family: 'Inter Tight', -apple-system, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: inherit; text-decoration: none; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-ligatures: none; }
+    .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+
+    /* === Page shell === */
+    .vc-page { min-height: 100vh; background: var(--bg); color: var(--fg); font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+    /* Nav */
+    .vc-nav {
+      position: sticky; top: 0; z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--fg);
+    }
+    .vc-nav-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; align-items: center; gap: 32px;
+      padding: 14px 28px;
+      font-size: 12.5px;
+    }
+    .vc-logo { font-weight: 700; font-size: 14px; color: var(--fg); display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .vc-logo svg { color: var(--fg); flex-shrink: 0; }
+    .vc-logo-bracket { color: var(--accent); }
+    .vc-nav-links { display: flex; gap: 12px; margin-left: auto; align-items: center; }
+    .vc-nav-links a { color: var(--fg-muted); }
+    .vc-nav-links a:hover { color: var(--fg); text-decoration: underline; }
+    .vc-dim { color: var(--fg-dim); }
+
+    .vc-langtoggle {
+      display: inline-flex; gap: 8px; align-items: center;
+      font-size: 11.5px; color: var(--fg-muted);
+      padding-left: 12px; margin-left: 4px;
+      border-left: 1px solid var(--border);
+    }
+    .vc-langtoggle a {
+      color: inherit; text-decoration: none;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+    }
+    .vc-langtoggle a.on { color: var(--fg); font-weight: 700; cursor: default; }
+    .vc-langtoggle a:hover { color: var(--fg); }
+
+    .vc-nav-install {
+      background: var(--fg); color: var(--bg);
+      padding: 8px 14px; font-weight: 700;
+    }
+    .vc-nav-install:hover { background: var(--accent); color: var(--accent-fg); }
+
+    /* Marquee */
+    .vc-marquee {
+      background: var(--fg); color: var(--bg);
+      font-size: 11px; letter-spacing: 0.6px;
+      padding: 6px 0; overflow: hidden;
+      border-bottom: 1px solid var(--fg);
+    }
+    .vc-marquee-track {
+      display: inline-flex; white-space: nowrap;
+      animation: vc-marquee 40s linear infinite;
+    }
+    .reduce-motion .vc-marquee-track { animation: none; }
+    @keyframes vc-marquee { to { transform: translateX(-50%); } }
+    .vc-marquee-track > span { padding-right: 24px; }
+
+    /* Hero */
+    .vc-hero { max-width: 1280px; margin: 0 auto; padding: 56px 28px 64px; border-bottom: 1px solid var(--fg); }
+    .vc-hero-meta {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--fg-dim);
+      letter-spacing: 0.6px;
+      padding-bottom: 28px;
+      border-bottom: 1px dashed var(--border);
+      margin-bottom: 40px;
+    }
+    .vc-h1 {
+      font: 700 clamp(48px, 8.5vw, 120px)/0.92 'JetBrains Mono', monospace;
+      letter-spacing: -3px;
+      margin: 0 0 56px;
+      text-wrap: balance;
+      word-break: break-word;
+      hyphens: auto;
+    }
+    .vc-hero-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 56px; align-items: end; }
+    .vc-hero-sub p {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 18px; line-height: 1.55;
+      color: var(--fg-muted);
+      margin: 0 0 28px;
+      max-width: 560px;
+    }
+
+    .vc-cta { display: flex; gap: 0; flex-wrap: wrap; }
+    .vc-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 20px;
+      font: 600 13px 'JetBrains Mono', monospace;
+      letter-spacing: 0.4px;
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--fg);
+      margin: 0 -1px -1px 0;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+    .vc-btn:hover { background: var(--fg); color: var(--bg); }
+    .vc-btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+    .vc-btn.primary:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+    .vc-hero-meta-grid {
+      display: grid; grid-template-columns: 1fr; gap: 0;
+      border: 1px solid var(--fg);
+      font-size: 12px;
+    }
+    .vc-meta-row {
+      display: grid; grid-template-columns: 130px 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .vc-meta-row:last-child { border-bottom: 0; }
+    .vc-meta-k {
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--fg-dim);
+      border-right: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-size: 10.5px;
+    }
+    .vc-meta-v { padding: 10px 14px; color: var(--fg); }
+
+    /* Manifesto */
+    .vc-manifesto { max-width: 1280px; margin: 0 auto; padding: 80px 28px; border-bottom: 1px solid var(--fg); }
+    .vc-manifesto-eyebrow { font-size: 11px; color: var(--fg-dim); letter-spacing: 1.4px; margin-bottom: 28px; }
+    .vc-manifesto-body {
+      font: 500 clamp(22px, 3vw, 38px)/1.4 'Inter Tight', sans-serif;
+      letter-spacing: -0.6px;
+      color: var(--fg);
+      margin: 0;
+      max-width: 1100px;
+      text-wrap: balance;
+    }
+    .vc-mark {
+      background: var(--accent);
+      color: var(--accent-fg);
+      padding: 0 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+    }
+
+    /* Sections */
+    .vc-section { max-width: 1280px; margin: 0 auto; padding: 80px 28px; border-bottom: 1px solid var(--fg); }
+    .vc-section-head {
+      display: flex; align-items: center; gap: 18px;
+      font-size: 11.5px; color: var(--accent);
+      letter-spacing: 1.4px;
+      margin-bottom: 22px;
+    }
+    .vc-section-line { flex: 1; height: 1px; background: var(--border); }
+    .vc-section-h {
+      font: 700 clamp(34px, 4.5vw, 64px)/1.05 'JetBrains Mono', monospace;
+      letter-spacing: -1.5px;
+      margin: 0 0 16px;
+      text-wrap: balance;
+    }
+    .vc-section-sub { font-family: 'Inter Tight', sans-serif; font-size: 17px; color: var(--fg-muted); max-width: 700px; margin: 0 0 48px; line-height: 1.55; }
+    .vc-section-body { margin-top: 32px; }
+
+    /* Feature list */
+    .vc-flist { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--fg); }
+    .vc-fli {
+      display: grid; grid-template-columns: 60px 1fr 1.6fr;
+      gap: 24px;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: baseline;
+      transition: padding-left 0.2s, color 0.15s;
+    }
+    .vc-fli:hover { padding-left: 16px; }
+    .vc-fli-n { font-size: 16px; color: var(--accent); font-weight: 700; }
+    .vc-fli-t {
+      font: 700 clamp(22px, 2.4vw, 32px)/1.15 'JetBrains Mono', monospace;
+      letter-spacing: -0.6px;
+    }
+    .vc-fli-d { font-family: 'Inter Tight', sans-serif; font-size: 15px; color: var(--fg-muted); line-height: 1.55; }
+
+    /* Diagram */
+    .vc-diagram { background: var(--surface); border: 1px solid var(--fg); padding: 28px; }
+    .vc-ascii {
+      font: 12px/1.5 'JetBrains Mono', monospace;
+      color: var(--fg-muted);
+      margin: 0;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .vc-diagram-steps { margin-top: 28px; padding-top: 22px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--fg); }
+    .vc-dstep strong { color: var(--accent); }
+
+    /* Use cases */
+    .vc-ulist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border: 1px solid var(--fg); }
+    .vc-uitem { padding: 28px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .vc-uitem:nth-child(2n) { border-right: 0; }
+    .vc-uitem:nth-last-child(-n+2) { border-bottom: 0; }
+    .vc-uitem-h { font-size: 11px; color: var(--accent); letter-spacing: 1.4px; margin-bottom: 14px; }
+    .vc-uitem-t { font: 700 22px/1.2 'JetBrains Mono', monospace; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .vc-uitem-d { font-family: 'Inter Tight', sans-serif; font-size: 14.5px; color: var(--fg-muted); line-height: 1.55; }
+
+    /* FAQ */
+    .vc-faq { border-top: 1px solid var(--fg); }
+    .vc-faq-item { border-bottom: 1px solid var(--border); }
+    .vc-faq-item summary {
+      cursor: pointer; padding: 22px 0;
+      font: 600 16px 'JetBrains Mono', monospace;
+      letter-spacing: -0.2px;
+      list-style: none;
+      display: flex; align-items: baseline; gap: 14px;
+    }
+    .vc-faq-item summary::-webkit-details-marker { display: none; }
+    .vc-faq-item summary::after { content: '+'; margin-left: auto; color: var(--accent); font-size: 22px; font-weight: 600; }
+    .vc-faq-item[open] summary::after { content: '−'; }
+    .vc-faq-item summary span.mono { color: var(--accent); font-size: 12px; }
+    .vc-faq-a { font-family: 'Inter Tight', sans-serif; font-size: 14.5px; color: var(--fg-muted); line-height: 1.7; padding: 0 0 22px 60px; }
+
+    /* Tail */
+    .vc-tail { max-width: 1280px; margin: 0 auto; padding: 96px 28px 120px; text-align: left; border-bottom: 1px solid var(--fg); }
+    .vc-tail-eyebrow { font-size: 11px; color: var(--fg-dim); letter-spacing: 1.4px; margin-bottom: 24px; }
+    .vc-tail-h {
+      font: 700 clamp(40px, 6vw, 88px)/0.95 'JetBrains Mono', monospace;
+      letter-spacing: -2px; margin: 0 0 40px; text-wrap: balance;
+    }
+
+    /* CJK polish — wider strokes don't break across ASCII glyphs the same way */
+    :lang(zh) .vc-h1,
+    :lang(zh) .vc-tail-h {
+      letter-spacing: -1px;
+      word-break: normal;
+      line-break: strict;
+    }
+    :lang(zh) .vc-manifesto-body {
+      letter-spacing: 0;
+      font-family: 'Inter Tight', system-ui, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    }
+
+    /* Footer */
+    .vc-footer { background: var(--bg); padding: 48px 28px 24px; font-size: 12px; }
+    .vc-footer-inner { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.2fr 2fr; gap: 48px; }
+    .vc-footer-brand { display: flex; align-items: flex-start; gap: 14px; }
+    .vc-footer-brand svg { color: var(--fg); flex-shrink: 0; margin-top: 2px; }
+    .vc-footer-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--fg); }
+    .vc-footer-tag { color: var(--fg-muted); max-width: 280px; line-height: 1.55; font-family: 'Inter Tight', sans-serif; font-size: 13px; }
+    .vc-footer-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .vc-footer-cols h5 { font-size: 11px; color: var(--accent); margin: 0 0 12px; letter-spacing: 0.6px; font-weight: 600; }
+    .vc-footer-cols a { display: block; color: var(--fg-muted); padding: 4px 0; }
+    .vc-footer-cols a:hover { color: var(--fg); text-decoration: underline; }
+    .vc-footer-bot {
+      max-width: 1280px; margin: 32px auto 0;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--fg-dim);
+      letter-spacing: 0.4px;
+    }
+
+    /* === Demo widget — visually aligned with src/panel/* === */
+    .demo {
+      display: flex; flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      overflow: hidden;
+      box-shadow: 0 30px 80px -30px rgba(0,0,0,0.5);
+      font-family: 'Inter Tight', -apple-system, system-ui, sans-serif;
+      color: var(--fg);
+    }
+
+    /* Toolbar — mirrors src/panel/Toolbar.tsx */
+    .demo-toolbar {
+      display: flex; align-items: center; gap: 6px;
+      height: 40px; padding: 0 10px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .demo-icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px;
+      background: transparent; border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--fg-muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .demo-icon-btn:hover { background: var(--surface-2); color: var(--fg); }
+    .demo-icon-btn .demo-rec-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--fg-muted);
+    }
+    .demo-icon-btn.recording { color: var(--red); }
+    .demo-icon-btn.recording .demo-rec-dot {
+      background: var(--red);
+      box-shadow: 0 0 8px color-mix(in oklab, var(--red) 60%, transparent);
+      animation: demo-pulse 1.6s ease-in-out infinite;
+    }
+    .reduce-motion .demo-icon-btn.recording .demo-rec-dot { animation: none; }
+    @keyframes demo-pulse { 50% { opacity: 0.45; } }
+    .demo-icon-btn .demo-glyph { font: 13px/1 'JetBrains Mono', monospace; }
+    .demo-divider { width: 1px; height: 18px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+    .demo-search {
+      display: flex; align-items: center; gap: 8px;
+      flex: 1; max-width: 420px; height: 26px; padding: 0 10px;
+      background: var(--bg);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--fg-muted);
+    }
+    .demo-search input {
+      flex: 1; min-width: 0;
+      background: transparent; border: 0; outline: none;
+      color: var(--fg);
+      font: 400 12.5px/1 'Inter Tight', sans-serif;
+    }
+    .demo-search input::placeholder { color: var(--fg-muted); }
+    .demo-kbd {
+      font: 500 10.5px/1 'JetBrains Mono', monospace;
+      padding: 2px 5px; border-radius: 4px;
+      color: var(--fg-muted);
+      background: var(--surface-2);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 1px 0 var(--border);
+    }
+    .demo-spacer { flex: 1; }
+    .demo-count { font: 500 11.5px 'JetBrains Mono', monospace; color: var(--fg-dim); white-space: nowrap; }
+
+    /* Filter chips — mirrors src/panel/FilterBar.tsx */
+    .demo-filterbar {
+      display: flex; align-items: center; gap: 6px;
+      height: 34px; padding: 0 10px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .demo-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 9px; border-radius: 5px;
+      font: 500 11.5px 'Inter Tight', sans-serif;
+      color: var(--fg-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .demo-chip:hover { color: var(--fg); }
+    .demo-chip.on { color: var(--fg); background: var(--surface-2); border-color: var(--border); }
+    .demo-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .demo-chip-glyph { font: 11px/1 'JetBrains Mono', monospace; }
+    .demo-chip-n { font: 500 11px 'JetBrains Mono', monospace; color: var(--fg-dim); }
+    .demo-prov-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 8px; border-radius: 5px;
+      font-size: 11.5px;
+      color: var(--fg-muted);
+      border: 1px dashed var(--border);
+      flex-shrink: 0;
+    }
+    .demo-prov-chip .demo-meta-glyph { font: 11px/1 'JetBrains Mono', monospace; opacity: 0.8; }
+
+    /* Body — list (left) + detail (right) */
+    .demo-body {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      height: 380px;
+      overflow: hidden;
+    }
+    .demo-list {
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .demo-list-head {
+      display: flex; align-items: center;
+      height: 26px; padding: 0 12px;
+      font: 500 10.5px/1 'Inter Tight', sans-serif;
+      letter-spacing: 0.4px;
+      color: var(--fg-dim);
+      text-transform: uppercase;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+    }
+    .demo-list-rows { flex: 1; overflow-y: auto; }
+
+    .demo-row {
+      width: 100%;
+      display: flex; align-items: center; gap: 8px;
+      height: 28px; padding: 0 12px 0 10px;
+      background: transparent;
+      border: 0;
+      border-left: 2px solid transparent;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 12px;
+      color: var(--fg-muted);
+      cursor: pointer;
+      text-align: left;
+      animation: demo-slidein 0.22s ease-out;
+    }
+    .reduce-motion .demo-row { animation: none; }
+    @keyframes demo-slidein { from { opacity: 0; transform: translateX(-6px); } }
+    .demo-row:hover { background: var(--surface); color: var(--fg); }
+    .demo-row.on {
+      background: color-mix(in oklab, var(--accent) 18%, transparent);
+      color: var(--fg);
+      border-left-color: var(--accent);
+    }
+    .demo-row-dot {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 8px; height: 28px;
+      flex-shrink: 0;
+    }
+    .demo-row-dot::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+    }
+    .demo-row.no-dot .demo-row-dot::before { content: none; }
+    .demo-row-kindtag {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; padding: 2px 0;
+      font: 600 9.5px 'JetBrains Mono', monospace;
+      letter-spacing: 0.3px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .demo-row-method {
+      flex: 1; min-width: 0;
+      font: 500 11.5px 'JetBrains Mono', monospace;
+      color: var(--fg-muted);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .demo-row.on .demo-row-method { color: var(--fg); }
+    .demo-row.err .demo-row-method { color: var(--red); }
+    .demo-row-flag {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 1px 5px;
+      font: 600 9.5px 'JetBrains Mono', monospace;
+      letter-spacing: 0.4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .demo-row-dur {
+      width: 56px;
+      font: 500 10.5px 'JetBrains Mono', monospace;
+      color: var(--fg-dim);
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Detail — mirrors src/panel/Detail/* */
+    .demo-detail {
+      display: flex; flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .demo-detail-header {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+    }
+    .demo-detail-row1 {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .demo-detail-method {
+      font: 600 17px/1.1 'JetBrains Mono', monospace;
+      letter-spacing: -0.2px;
+      color: var(--fg);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .demo-status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 7px; border-radius: 3px;
+      font: 600 10px 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+    .demo-status-badge::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: currentColor;
+    }
+    .demo-detail-actions {
+      display: flex; gap: 4px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .demo-action-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      color: var(--fg-muted);
+      font: 500 11.5px 'Inter Tight', sans-serif;
+      cursor: pointer;
+    }
+    .demo-action-btn:hover { background: var(--surface-2); color: var(--fg); }
+    .demo-action-btn.demo-flash {
+      background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
+    }
+    .demo-action-glyph { font: 11px 'JetBrains Mono', monospace; }
+    .demo-detail-meta {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 14px;
+      font-size: 11.5px;
+      color: var(--fg-muted);
+    }
+    .demo-meta-bit { display: inline-flex; align-items: center; gap: 5px; }
+    .demo-meta-glyph { font: 11px/1 'JetBrains Mono', monospace; opacity: 0.8; }
+    .demo-meta-id { margin-left: auto; font: 500 10.5px 'JetBrains Mono', monospace; color: var(--fg-dim); }
+
+    /* Tabs */
+    .demo-tabs {
+      display: flex; gap: 0;
+      height: 34px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+      align-items: flex-end;
+    }
+    .demo-tab {
+      display: inline-flex; align-items: center;
+      padding: 0 10px; height: 30px;
+      background: transparent; border: 0;
+      font: 500 12px 'Inter Tight', sans-serif;
+      color: var(--fg-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .demo-tab:hover { color: var(--fg); }
+    .demo-tab.on { color: var(--fg); border-bottom-color: var(--accent); }
+
+    .demo-tab-body {
+      flex: 1;
+      overflow: auto;
+      padding: 14px 18px 18px;
+      font-size: 12.5px;
+    }
+    .demo-section-label {
+      font: 600 10px 'Inter Tight', sans-serif;
+      letter-spacing: 0.8px;
+      color: var(--fg-dim);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* Decoded view — mirrors src/panel/Detail/Decoded.tsx (flat, no outer card) */
+    .demo-decoded-sigline {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .demo-decoded-sig {
+      font: 600 13px 'JetBrains Mono', monospace;
+      color: var(--fg);
+      word-break: break-all;
+    }
+    .demo-source-badge {
+      display: inline-flex; align-items: center;
+      padding: 1px 6px;
+      font: 600 9.5px 'JetBrains Mono', monospace;
+      letter-spacing: 0.4px;
+      border-radius: 3px;
+    }
+    .demo-decoded-contract {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+      font-size: 11.5px;
+      color: var(--fg-muted);
+    }
+    .demo-decoded-contract-k {
+      font: 600 10px 'Inter Tight', sans-serif;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .demo-decoded-contract-v { font: 500 12px 'JetBrains Mono', monospace; color: var(--fg); }
+
+    .demo-risk-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .demo-risk {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: color-mix(in oklab, var(--amber) 8%, transparent);
+      border: 1px solid color-mix(in oklab, var(--amber) 30%, transparent);
+    }
+    .demo-risk-tag {
+      flex-shrink: 0;
+      padding: 1px 6px;
+      font: 700 9.5px 'JetBrains Mono', monospace;
+      letter-spacing: 0.4px;
+      border-radius: 3px;
+      color: var(--amber);
+      background: color-mix(in oklab, var(--amber) 18%, transparent);
+    }
+    .demo-risk-msg { font-size: 12px; color: var(--fg); line-height: 1.45; }
+
+    .demo-args-table {
+      display: flex; flex-direction: column;
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .demo-args-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 8px 10px;
+      font-size: 11.5px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .demo-args-row:last-child { border-bottom: 0; }
+    .demo-args-name-col {
+      display: flex; flex-direction: column;
+      width: 110px; flex-shrink: 0;
+    }
+    .demo-args-name { color: var(--fg); font: 500 11.5px 'Inter Tight', sans-serif; }
+    .demo-args-type { color: var(--fg-dim); font: 10px 'JetBrains Mono', monospace; }
+    .demo-args-val {
+      flex: 1; min-width: 0;
+      font: 500 11.5px 'JetBrains Mono', monospace;
+      color: var(--fg);
+      word-break: break-all;
+    }
+
+    .demo-raw-toggle { margin-top: 12px; }
+    .demo-raw-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: transparent; border: 0; padding: 0;
+      cursor: pointer;
+      font: 600 11px 'Inter Tight', sans-serif;
+      letter-spacing: 0.5px;
+      color: var(--fg-muted);
+      text-transform: uppercase;
+    }
+    .demo-raw-btn:hover { color: var(--fg); }
+
+    .demo-code {
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font: 11.5px/1.6 'JetBrains Mono', monospace;
+      color: var(--fg);
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      overflow: auto;
+    }
+    .demo-code.err {
+      border-color: color-mix(in oklab, var(--red) 40%, var(--border-soft));
+      background: color-mix(in oklab, var(--red) 8%, var(--surface));
+      color: var(--red);
+    }
+
+    /* Timing */
+    .demo-timing { display: flex; flex-direction: column; gap: 0; }
+    .demo-timing-row {
+      display: flex; align-items: center; gap: 12px;
+      height: 26px;
+      font-size: 11.5px;
+    }
+    .demo-timing-label {
+      width: 150px;
+      color: var(--fg-muted);
+      flex-shrink: 0;
+    }
+    .demo-timing-bar {
+      flex: 1; position: relative;
+      height: 14px;
+      background: var(--surface);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .demo-timing-fill {
+      position: absolute;
+      top: 0; bottom: 0;
+      border-radius: 2px;
+      opacity: 0.85;
+    }
+    .demo-timing-ms {
+      width: 70px;
+      text-align: right;
+      font: 500 10.5px 'JetBrains Mono', monospace;
+      color: var(--fg-dim);
+      flex-shrink: 0;
+    }
+
+    .demo-empty {
+      display: flex; align-items: center; justify-content: center;
+      flex: 1;
+      padding: 24px;
+      font: 13px 'Inter Tight', sans-serif;
+      color: var(--fg-muted);
+    }
+
+    /* Status bar — mirrors src/panel/StatusBar.tsx */
+    .demo-statusbar {
+      display: flex; align-items: center;
+      height: 24px; gap: 14px; padding: 0 12px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      font-size: 10.5px;
+      color: var(--fg-dim);
+      flex-shrink: 0;
+    }
+    .demo-status-bit { display: inline-flex; align-items: center; gap: 5px; }
+    .demo-status-bit::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+    }
+    .demo-status-bit.idle { color: var(--fg-dim); }
+    .demo-status-bit.live { color: var(--green); }
+    .demo-status-total { font: 500 10.5px 'JetBrains Mono', monospace; color: var(--fg-dim); }
+    .demo-status-shortcut { margin-left: auto; }
+
+    /* Copy menu — mirrors src/panel/Detail/CopyMenu.tsx */
+    .demo-copy-wrap { position: relative; }
+    .demo-copy-menu {
+      position: absolute; right: 0; top: calc(100% + 4px);
+      z-index: 10;
+      min-width: 260px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      padding: 4px;
+    }
+    .demo-copy-title {
+      padding: 6px 10px 4px;
+      font: 600 10px/1 'Inter Tight', sans-serif;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+    }
+    .demo-copy-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      width: 100%;
+      padding: 8px 10px;
+      background: transparent;
+      border: 0; border-radius: 4px;
+      text-align: left;
+      cursor: pointer;
+      color: var(--fg);
+    }
+    .demo-copy-item:hover { background: var(--surface); }
+    .demo-copy-glyph {
+      flex-shrink: 0;
+      width: 16px; margin-top: 2px;
+      font: 13px/1 'JetBrains Mono', monospace;
+      color: var(--fg-muted);
+      text-align: center;
+    }
+    .demo-copy-col { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .demo-copy-name { font: 500 12.5px 'Inter Tight', sans-serif; }
+    .demo-copy-hint { font: 10.5px 'Inter Tight', sans-serif; color: var(--fg-dim); margin-top: 2px; }
+    .demo-copy-hint.ok  { color: var(--green); }
+    .demo-copy-hint.err { color: var(--red); }
+    .demo-copy-check { color: var(--green); margin-top: 2px; font: 13px/1 'JetBrains Mono', monospace; }
+
+    .scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+    .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+    .scroll::-webkit-scrollbar-thumb:hover { background: var(--fg-dim); border: 2px solid transparent; background-clip: padding-box; }
+    .scroll::-webkit-scrollbar-track { background: transparent; }
+
+    /* Responsive — collapse hero / use grid on narrow viewports */
+    @media (max-width: 860px) {
+      .vc-hero-grid { grid-template-columns: 1fr; gap: 28px; }
+      .vc-fli { grid-template-columns: 40px 1fr; }
+      .vc-fli-d { grid-column: 1 / -1; padding-left: 64px; }
+      .vc-ulist { grid-template-columns: 1fr; }
+      .vc-uitem { border-right: 0; }
+      .vc-footer-inner { grid-template-columns: 1fr; }
+      .vc-footer-cols { grid-template-columns: repeat(3, 1fr); }
+      .demo-body { grid-template-columns: 1fr; height: auto; }
+      .demo-list { max-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); }
+      .demo-tabs { padding: 0 12px; }
+      .demo-tab-body { padding: 12px; }
+      .demo-detail-header { padding: 12px 14px 10px; }
+      .demo-detail-actions { gap: 2px; }
+      .demo-action-btn { padding: 4px 6px; font-size: 11px; }
+      .demo-detail-method { font-size: 14px; }
+      .demo-decoded-arg { grid-template-columns: 96px 1fr; }
+      .demo-timing-label { width: 110px; }
+      .vc-nav-inner { gap: 12px; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="vc-page">
+
+    <nav class="vc-nav">
+      <div class="vc-nav-inner">
+        <a href="#" class="vc-logo mono" aria-label="DApp Inspector">
+          <span class="vc-logo-bracket">[</span>dapp.inspector<span class="vc-logo-bracket">]</span>
+        </a>
+        <div class="vc-nav-links mono">
+          <a href="#features" data-st="nav.features"></a>
+          <span class="vc-dim">·</span>
+          <a href="#how" data-st="nav.howit"></a>
+          <span class="vc-dim">·</span>
+          <a href="#demo" data-st="nav.demo"></a>
+          <span class="vc-dim">·</span>
+          <a href="#faq" data-st="nav.faq"></a>
+        </div>
+        <div class="vc-langtoggle mono" role="group" aria-label="Language">
+          <a data-lang="en" href="#" hreflang="en" rel="alternate">EN</a>
+          <span class="vc-dim">·</span>
+          <a data-lang="zh" href="#" hreflang="zh-Hans" rel="alternate">中</a>
+        </div>
+        <a href="https://github.com/beilunyang/dapp-inspector-extension/releases/latest" class="vc-nav-install mono"><span data-st="cta.install"></span> →</a>
+      </div>
+    </nav>
+
+    <div class="vc-marquee mono" aria-hidden="true">
+      <div class="vc-marquee-track" id="marquee-track"></div>
+    </div>
+
+    <header class="vc-hero">
+      <div class="vc-hero-meta mono">
+        <span id="hero-build">v0.1.0 · Apache 2.0</span>
+        <span>~/dapp-inspector/README.md</span>
+      </div>
+      <h1 class="vc-h1" data-st="hero.h.alt2"></h1>
+      <div class="vc-hero-grid">
+        <div class="vc-hero-sub">
+          <p data-st="hero.sub.alt2"></p>
+          <div class="vc-cta">
+            <a class="vc-btn primary" href="https://github.com/beilunyang/dapp-inspector-extension/releases/latest"><span data-st="cta.install"></span> <span class="mono">→</span></a>
+            <a class="vc-btn" href="https://github.com/beilunyang/dapp-inspector-extension" data-st="cta.github"></a>
+            <a class="vc-btn" href="#demo" data-st="cta.demo"></a>
+          </div>
+        </div>
+        <div class="vc-hero-meta-grid mono">
+          <div class="vc-meta-row"><span class="vc-meta-k">version</span>     <span class="vc-meta-v">0.1.0</span></div>
+          <div class="vc-meta-row"><span class="vc-meta-k">license</span>     <span class="vc-meta-v">Apache 2.0</span></div>
+          <div class="vc-meta-row"><span class="vc-meta-k">size</span>        <span class="vc-meta-v">~ 1.3 MB (zip)</span></div>
+          <div class="vc-meta-row"><span class="vc-meta-k">telemetry</span>   <span class="vc-meta-v">none</span></div>
+          <div class="vc-meta-row"><span class="vc-meta-k">permissions</span> <span class="vc-meta-v">tabs · storage · alarms · &lt;all_urls&gt;</span></div>
+          <div class="vc-meta-row"><span class="vc-meta-k">manifest</span>    <span class="vc-meta-v">MV3</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="vc-manifesto">
+      <div class="vc-manifesto-eyebrow mono" data-st="mani.eyebrow"></div>
+      <p class="vc-manifesto-body">
+        <span class="vc-mark" data-st="mani.mark.1"></span> <span data-st="mani.body.1"></span>
+        <span data-st="mani.body.2"></span>
+        <span class="vc-mark" data-st="mani.mark.2"></span>
+        <span data-st="mani.body.3"></span>
+      </p>
+    </section>
+
+    <section id="demo" class="vc-section">
+      <div class="vc-section-head mono"><span>§ 02</span><span class="vc-section-line" aria-hidden="true"></span></div>
+      <h2 class="vc-section-h" data-st="demo.title"></h2>
+      <p class="vc-section-sub" data-st="demo.sub"></p>
+      <div class="vc-section-body">
+        <div class="demo" id="demo-root" role="region" aria-label="DApp Inspector preview panel">
+          <div class="demo-toolbar">
+            <button class="demo-icon-btn recording" id="btn-record" type="button">
+              <span class="demo-rec-dot"></span>
+            </button>
+            <button class="demo-icon-btn" id="btn-clear" type="button">
+              <span class="demo-glyph">⌫</span>
+            </button>
+            <span class="demo-divider"></span>
+            <label class="demo-search">
+              <span class="demo-glyph" aria-hidden="true">⌕</span>
+              <input id="demo-search" type="text" placeholder="Filter by method" />
+              <span class="demo-kbd mono">⌘F</span>
+            </label>
+            <span class="demo-spacer"></span>
+            <span class="demo-count mono" id="demo-count"></span>
+            <span class="demo-divider"></span>
+            <button class="demo-icon-btn" id="btn-settings" type="button" tabindex="-1">
+              <span class="demo-glyph">⚙</span>
+            </button>
+          </div>
+
+          <div class="demo-filterbar scroll" id="demo-filterbar"></div>
+
+          <div class="demo-body">
+            <div class="demo-list">
+              <div class="demo-list-head" id="demo-list-head"></div>
+              <div class="demo-list-rows scroll" id="demo-list"></div>
+            </div>
+            <div class="demo-detail" id="demo-detail"></div>
+          </div>
+
+          <div class="demo-statusbar" id="demo-statusbar"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="vc-section">
+      <div class="vc-section-head mono"><span>§ 03</span><span class="vc-section-line" aria-hidden="true"></span></div>
+      <h2 class="vc-section-h" data-st="features.title"></h2>
+      <p class="vc-section-sub" data-st="features.sub"></p>
+      <div class="vc-section-body">
+        <ol class="vc-flist" id="flist"></ol>
+      </div>
+    </section>
+
+    <section id="how" class="vc-section">
+      <div class="vc-section-head mono"><span>§ 04</span><span class="vc-section-line" aria-hidden="true"></span></div>
+      <h2 class="vc-section-h" data-st="how.title"></h2>
+      <div class="vc-section-body">
+        <div class="vc-diagram mono">
+<pre class="vc-ascii">
+   ┌──────────────┐    ┌──────────────────┐    ┌──────────────┐    ┌──────────────┐
+   │ DApp page    │ →  │ Inspector probe  │ →  │ Wallet       │ →  │ Chain RPC    │
+   │ window.eth…  │    │ ( clones req )   │    │ ( signs UI ) │    │ ( responds ) │
+   └──────────────┘    └────────┬─────────┘    └──────────────┘    └──────────────┘
+                                │
+                                ▼
+                        ┌────────────────┐
+                        │ DevTools panel │
+                        │ inspect/replay │
+                        │   /mock /grep  │
+                        └────────────────┘
+</pre>
+          <div class="vc-diagram-steps" id="how-steps"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="use" class="vc-section">
+      <div class="vc-section-head mono"><span>§ 05</span><span class="vc-section-line" aria-hidden="true"></span></div>
+      <h2 class="vc-section-h" data-st="use.title"></h2>
+      <div class="vc-section-body">
+        <div class="vc-ulist" id="ulist"></div>
+      </div>
+    </section>
+
+    <section id="faq" class="vc-section">
+      <div class="vc-section-head mono"><span>§ 06</span><span class="vc-section-line" aria-hidden="true"></span></div>
+      <h2 class="vc-section-h">Q &amp; A</h2>
+      <div class="vc-section-body">
+        <div class="vc-faq" id="faq-list"></div>
+      </div>
+    </section>
+
+    <section class="vc-tail">
+      <div class="vc-tail-eyebrow mono" data-st="tail.eyebrow"></div>
+      <h2 class="vc-tail-h" data-st="tail.h"></h2>
+      <div class="vc-cta">
+        <a class="vc-btn primary" href="https://github.com/beilunyang/dapp-inspector-extension/releases/latest"><span data-st="cta.install"></span> <span class="mono">→</span></a>
+        <a class="vc-btn" href="https://github.com/beilunyang/dapp-inspector-extension" data-st="cta.github"></a>
+      </div>
+    </section>
+
+    <footer class="vc-footer mono">
+      <div class="vc-footer-inner">
+        <div class="vc-footer-brand">
+          <div>
+            <div class="vc-footer-name">[ dapp.inspector ]</div>
+            <div class="vc-footer-tag" data-st="foot.tag"></div>
+          </div>
+        </div>
+        <div class="vc-footer-cols">
+          <div>
+            <h5>// <span data-st="foot.product"></span></h5>
+            <a href="#features">features</a>
+            <a href="#demo">demo</a>
+          </div>
+          <div>
+            <h5>// <span data-st="foot.resources"></span></h5>
+            <a href="https://github.com/beilunyang/dapp-inspector-extension#readme">docs</a>
+            <a href="#faq">faq</a>
+            <a href="privacy.html">privacy</a>
+          </div>
+          <div>
+            <h5>// <span data-st="foot.community"></span></h5>
+            <a href="https://github.com/beilunyang/dapp-inspector-extension">github</a>
+            <a href="https://github.com/beilunyang/dapp-inspector-extension/issues">issues</a>
+            <a href="https://github.com/beilunyang/dapp-inspector-extension/releases">releases</a>
+          </div>
+        </div>
+      </div>
+      <div class="vc-footer-bot" data-st="foot.legal"></div>
+    </footer>
+
+  </div>
+
+  <script>
+  // ===========================================================================
+  // i18n strings (subset of project/site/site-i18n.jsx — only keys actually
+  // rendered in Variation C; compare/roadmap/hero-eyebrow live elsewhere).
+  // ===========================================================================
+  const SITE_STRINGS = {
+    en: {
+      'nav.features': 'Features', 'nav.howit': 'How it works', 'nav.demo': 'Demo', 'nav.faq': 'FAQ',
+      'cta.install': 'Add to Chrome', 'cta.github': 'View on GitHub', 'cta.demo': 'Try the demo',
+
+      'hero.h.alt2':   'Wireshark for window.ethereum.',
+      'hero.sub.alt2': 'A Chrome DevTools panel that records, decodes and intercepts wallet RPC. Local-first, zero telemetry.',
+
+      'mani.eyebrow': '§ 01 · MANIFESTO',
+      'mani.mark.1':  'window.ethereum',
+      'mani.body.1':  'is a black box. We slot a probe between the DApp and the wallet,',
+      'mani.body.2':  'tap every JSON-RPC call, decode the calldata against known ABIs, and hand you a full-fidelity replay button. That’s it.',
+      'mani.mark.2':  'No proxy. No telemetry.',
+      'mani.body.3':  'Apache 2.0, runs locally, ships as one Chrome extension.',
+
+      'demo.title': 'See it in action',
+      'demo.sub':   'A live mirror of the DevTools panel. Click any call to inspect it; mock, replay or block it from the detail header.',
+      'demo.waiting': 'Waiting for window.ethereum…',
+      'demo.select':  'Select a call to inspect',
+
+      // Mirror src/shared/i18n/en.ts → panel.*
+      'panel.count': '{n} calls',
+      'panel.toolbar.search':  'Filter by method',
+      'panel.toolbar.clear':   'Clear',
+      'panel.toolbar.settings':'Settings',
+      'panel.toolbar.record':  'Record',
+      'panel.toolbar.pause':   'Pause',
+      'panel.list.method':   'Method',
+      'panel.list.duration': 'Time',
+      'panel.filters.all':       'All',
+      'panel.filters.read':      'Read',
+      'panel.filters.write':     'Write',
+      'panel.filters.sign':      'Sign',
+      'panel.filters.subscribe': 'Subscribe',
+      'panel.filters.errors':    'Errors',
+      'panel.filters.mocked':    'Mocked',
+      'panel.filters.blocked':   'Blocked',
+      'panel.filters.throttled': 'Throttled',
+      'panel.filters.replayed':  'Replayed',
+      'panel.detail.replay': 'Replay',
+      'panel.detail.mock':   'Mock',
+      'panel.detail.block':  'Block',
+      'panel.detail.tabs.decoded': 'Decoded',
+      'panel.detail.tabs.params':  'Parameters',
+      'panel.detail.tabs.result':  'Result',
+      'panel.detail.tabs.timing':  'Timing',
+      'panel.detail.tabs.raw':     'Raw',
+      'panel.detail.sec.decoded': 'Decoded calldata',
+      'panel.detail.sec.params':  'Request parameters',
+      'panel.detail.sec.result':  'Return value',
+      'panel.detail.sec.timing':  'Breakdown · {n} ms',
+      'panel.detail.sec.raw':     'Raw JSON-RPC envelope',
+      'panel.detail.timing.dapp':     'DApp dispatch',
+      'panel.detail.timing.queue':    'Queued in extension',
+      'panel.detail.timing.throttle': 'Throttle rule delay',
+      'panel.detail.timing.approval': 'Wallet approval',
+      'panel.detail.timing.rpc':      'RPC roundtrip',
+      'panel.detail.timing.return':   'Return to DApp',
+      'panel.detail.decoded.contract':      'Contract',
+      'panel.detail.decoded.signature':     'Function',
+      'panel.detail.decoded.args':          'Arguments',
+      'panel.detail.decoded.signedMessage': 'Signed message',
+      'panel.copy.button':       'Copy',
+      'panel.copy.jsonRpc':      'JSON-RPC envelope',
+      'panel.copy.jsonRpcHint':  'Request + response in one object',
+      'panel.copy.markdown':     'Markdown row',
+      'panel.copy.markdownHint': 'For GitHub issues or notion docs',
+      'panel.copy.title':        'Copy as',
+      'panel.copy.copied':       'Copied',
+      'panel.copy.copyFailed':   'Copy failed',
+      // panel/StatusBar.tsx
+      'panel.status.connected': 'Connected',
+      'panel.status.idle':      'Idle',
+      'panel.status.total':     '{n} logs total',
+      'panel.status.shortcut':  '{k} to focus',
+
+      'features.title': 'Built for the moment something goes wrong',
+      'features.sub':   'Wallets are black boxes. We pry them open.',
+
+      'f1.t': 'Wire-level capture',
+      'f1.d': 'Every JSON-RPC call between window.ethereum and the wallet — including internal ones — recorded with timing, origin and stack.',
+      'f2.t': 'Inline ABI decoding',
+      'f2.d': 'Calldata decoded via built-in ERC-20/721/1155/Permit2 ABIs, then Sourcify (verified contracts), with 4byte selector lookup as fallback. See "swap(address,uint256)" instead of 0x38ed1739…',
+      'f3.t': 'One-click replay',
+      'f3.d': 'Re-fire any captured call against the live wallet, with editable parameters. Reproduce that flaky bug deterministically.',
+      'f4.t': 'Response mocking',
+      'f4.d': 'Intercept matching calls and return whatever you want — fake balances, slow networks, deterministic chain IDs. No proxy required.',
+      'f5.t': 'Security warnings',
+      'f5.d': 'Flags unlimited ERC-20 / Permit2 approvals, blanket setApprovalForAll, and large native-value transfers — before you click sign.',
+      'f6.t': 'Local-first',
+      'f6.d': 'Zero telemetry. Zero remote dependency. Logs live in browser storage and never leave your machine.',
+
+      'how.title': 'It sits between, listens, and stays out of the way.',
+      'how.s1.t': 'DApp calls window.ethereum',
+      'how.s1.d': 'eth_sendTransaction({ to, data, value, ... })',
+      'how.s2.t': 'Inspector taps the request',
+      'how.s2.d': 'In-page injector clones the payload before forwarding.',
+      'how.s3.t': 'Wallet processes normally',
+      'how.s3.d': 'No proxy, no MITM. Wallet still signs through its own UI.',
+      'how.s4.t': 'Response captured + decoded',
+      'how.s4.d': 'Result, timing and stack land in DevTools, ready to inspect.',
+
+      'use.title': 'For the work that wallets make hard.',
+      'use.u1.t': 'Debugging swap reverts',
+      'use.u1.d': 'See exactly what calldata Uniswap router received and why the simulation came back red.',
+      'use.u2.t': 'Auditing approvals',
+      'use.u2.d': 'Spot infinite approvals before they ship to mainnet.',
+      'use.u3.t': 'Reproducing flaky bugs',
+      'use.u3.d': 'Replay the exact same eth_call until you can read the revert reason.',
+      'use.u4.t': 'Mocking chain state',
+      'use.u4.d': 'Fake a balance, a chainId or a slow network — without standing up an Anvil node.',
+
+      'faq.q1': 'Does it send my data anywhere?',
+      'faq.a1': 'No. Nothing leaves your browser. Captured calls live in IndexedDB on your device; rules, settings and the ABI cache live in chrome.storage.local. The only outbound traffic — all optional, gated by Settings → Capture → Auto-fetch ABI — is unauthenticated GETs to sourcify.dev (verified-contract ABIs), api.4byte.sourcify.dev (selector → signature fallback), and chainid.network (chain catalog, fetched once).',
+      'faq.q2': 'Which wallets does it support?',
+      'faq.a2': 'Any EVM wallet that injects window.ethereum or registers via EIP-6963 — primary tested set is MetaMask, Rabby, and OKX Wallet, with Coinbase Wallet, Frame, and most embedded wallets working out of the box on the same standards.',
+      'faq.q3': 'Will it slow my DApp down?',
+      'faq.a3': 'No measurable overhead. The injector clones the payload synchronously and forwards immediately; nothing is awaited on the capture path.',
+      'faq.q4': 'Is it really open source?',
+      'faq.a4': 'Apache 2.0. Read the source, audit it, fork it, ship your own build.',
+      'faq.q5': 'Does mocking work for signed transactions?',
+      'faq.a5': 'You can’t fake a signature, but you can mock the response — pretend the tx was mined, return any receipt you want, simulate confirmations.',
+
+      'tail.eyebrow': '// END OF FILE',
+      'tail.h':       'Wireshark for window.ethereum.',
+      'foot.tag':       'Built by developers who got tired of console.log(payload).',
+      'foot.product':   'Product',
+      'foot.resources': 'Resources',
+      'foot.community': 'Community',
+      'foot.legal':     '© 2026 DApp Inspector · Apache 2.0',
+    },
+    zh: {
+      'nav.features': '能力', 'nav.howit': '工作原理', 'nav.demo': '演示', 'nav.faq': '常见问题',
+      'cta.install': '添加到 Chrome', 'cta.github': '在 GitHub 查看', 'cta.demo': '体验演示',
+
+      'hero.h.alt2':   '给 window.ethereum 的 Wireshark。',
+      'hero.sub.alt2': '一个记录、解码、拦截钱包 RPC 的 Chrome DevTools 面板。本地优先，零遥测。',
+
+      'mani.eyebrow': '§ 01 · 立场',
+      'mani.mark.1':  'window.ethereum',
+      'mani.body.1':  '是一个黑盒。我们在 DApp 与钱包中间插一根探针，',
+      'mani.body.2':  '截下每一条 JSON-RPC，对照已知 ABI 把 calldata 解码，然后把“完整可重放”的按钮交到你手上。仅此而已。',
+      'mani.mark.2':  '不代理。不遥测。',
+      'mani.body.3':  'Apache 2.0，本地运行，只是一个 Chrome 扩展。',
+
+      'demo.title': '现场看一遍',
+      'demo.sub':   '和真实 DevTools 面板一模一样——点击任意调用查看详情，从右侧顶部按钮触发模拟、重放或拦截。',
+      'demo.waiting': '等待 window.ethereum…',
+      'demo.select':  '选一条调用查看详情',
+
+      // 镜像 src/shared/i18n/zh.ts → panel.*
+      'panel.count': '{n} 条调用',
+      'panel.toolbar.search':  '按方法筛选',
+      'panel.toolbar.clear':   '清空',
+      'panel.toolbar.settings':'设置',
+      'panel.toolbar.record':  '记录',
+      'panel.toolbar.pause':   '暂停',
+      'panel.list.method':   '方法',
+      'panel.list.duration': '耗时',
+      'panel.filters.all':       '全部',
+      'panel.filters.read':      '读取',
+      'panel.filters.write':     '写入',
+      'panel.filters.sign':      '签名',
+      'panel.filters.subscribe': '订阅',
+      'panel.filters.errors':    '错误',
+      'panel.filters.mocked':    '模拟',
+      'panel.filters.blocked':   '拦截',
+      'panel.filters.throttled': '限速',
+      'panel.filters.replayed':  '重放',
+      'panel.detail.replay': '重放',
+      'panel.detail.mock':   '模拟',
+      'panel.detail.block':  '拦截',
+      'panel.detail.tabs.decoded': '解码',
+      'panel.detail.tabs.params':  '参数',
+      'panel.detail.tabs.result':  '返回值',
+      'panel.detail.tabs.timing':  '耗时',
+      'panel.detail.tabs.raw':     '原始数据',
+      'panel.detail.sec.decoded': '解码后的 calldata',
+      'panel.detail.sec.params':  '请求参数',
+      'panel.detail.sec.result':  '返回值',
+      'panel.detail.sec.timing':  '耗时分解 · {n} 毫秒',
+      'panel.detail.sec.raw':     '原始 JSON-RPC 报文',
+      'panel.detail.timing.dapp':     'DApp 发送',
+      'panel.detail.timing.queue':    '扩展排队',
+      'panel.detail.timing.throttle': '限速规则延迟',
+      'panel.detail.timing.approval': '钱包授权',
+      'panel.detail.timing.rpc':      'RPC 往返',
+      'panel.detail.timing.return':   '返回给 DApp',
+      'panel.detail.decoded.contract':      '合约',
+      'panel.detail.decoded.signature':     '函数',
+      'panel.detail.decoded.args':          '参数',
+      'panel.detail.decoded.signedMessage': '待签名消息',
+      'panel.copy.button':       '复制',
+      'panel.copy.jsonRpc':      'JSON-RPC envelope',
+      'panel.copy.jsonRpcHint':  '请求 + 响应合并在一个对象',
+      'panel.copy.markdown':     'Markdown 表格行',
+      'panel.copy.markdownHint': '贴到 GitHub Issue 或笔记中',
+      'panel.copy.title':        '复制为',
+      'panel.copy.copied':       '已复制',
+      'panel.copy.copyFailed':   '复制失败',
+      // panel/StatusBar.tsx
+      'panel.status.connected': '已连接',
+      'panel.status.idle':      '已暂停',
+      'panel.status.total':     '共 {n} 条',
+      'panel.status.shortcut':  '{k} 聚焦搜索',
+
+      'features.title': '在出问题的那一刻，刚好用得上。',
+      'features.sub':   '钱包是黑盒，我们把它撑开。',
+
+      'f1.t': '链路级捕获',
+      'f1.d': 'window.ethereum 与钱包之间的每一条 JSON-RPC——包含内部调用——都带耗时、来源与堆栈记录在案。',
+      'f2.t': 'ABI 内联解码',
+      'f2.d': '内置 ERC-20/721/1155/Permit2 优先解码，未命中再查 Sourcify（已验证合约），最后回退到 4byte 选择器查询。看到的是 \"swap(address,uint256)\"，而不是 0x38ed1739……',
+      'f3.t': '一键回放',
+      'f3.d': '对真实钱包重放任意捕获过的调用，参数可改。把偶发 bug 变成确定可复现。',
+      'f4.t': '响应模拟',
+      'f4.d': '拦截匹配的调用并返回任意结果——伪造余额、慢网络、固定 chainId。无需代理。',
+      'f5.t': '安全告警',
+      'f5.d': '在你点签名前，标记 ERC-20 / Permit2 的无限授权、整个 NFT 系列的 setApprovalForAll，以及大额原生转账。',
+      'f6.t': '本地优先',
+      'f6.d': '零遥测，零远端依赖。日志只存在浏览器，不会离开你的电脑。',
+
+      'how.title': '居中而坐，只听不动，不打扰你。',
+      'how.s1.t': 'DApp 调用 window.ethereum',
+      'how.s1.d': 'eth_sendTransaction({ to, data, value, ... })',
+      'how.s2.t': 'Inspector 监听请求',
+      'how.s2.d': '页面注入器在转发前先克隆一份载荷。',
+      'how.s3.t': '钱包正常处理',
+      'how.s3.d': '不代理，不中间人。钱包仍走自己的 UI 签名。',
+      'how.s4.t': '响应捕获并解码',
+      'how.s4.d': '结果、耗时与堆栈进入 DevTools，可立即查看。',
+
+      'use.title': '钱包让你头大的那些事。',
+      'use.u1.t': '调试 swap revert',
+      'use.u1.d': '看清 Uniswap router 实际收到的 calldata，以及 simulate 为什么飘红。',
+      'use.u2.t': '审计授权',
+      'use.u2.d': '在交易上主网之前发现无限授权。',
+      'use.u3.t': '复现偶发 bug',
+      'use.u3.d': '反复回放同一个 eth_call，直到 revert reason 看清为止。',
+      'use.u4.t': '模拟链上状态',
+      'use.u4.d': '伪造余额、chainId 或慢网络——不用起一个 Anvil 节点。',
+
+      'faq.q1': '会不会把我的数据传到外面？',
+      'faq.a1': '不会。任何数据都不会离开浏览器。捕获到的调用存在本机 IndexedDB；规则、偏好与 ABI 缓存存在 chrome.storage.local。唯一的外发流量都可以在「设置 → 捕获 → 自动获取 ABI」里关掉：未带身份的 GET 请求会发到 sourcify.dev（已验证合约 ABI）、api.4byte.sourcify.dev（选择器签名回退），以及 chainid.network（链目录，仅首次加载）。',
+      'faq.q2': '支持哪些钱包？',
+      'faq.a2': '只要钱包注入 window.ethereum 或通过 EIP-6963 注册即可——主要测试的是 MetaMask、Rabby、OKX Wallet；Coinbase Wallet、Frame 等遵循同一套标准的钱包也能直接用。',
+      'faq.q3': '会拖慢 DApp 吗？',
+      'faq.a3': '没有可测量的开销。注入器同步克隆载荷后立即转发，捕获路径上没有任何 await。',
+      'faq.q4': '真的是开源吗？',
+      'faq.a4': 'Apache 2.0。读源码、审一遍、自己 fork、出自己的版本都行。',
+      'faq.q5': '能模拟已签名的交易吗？',
+      'faq.a5': '签名本身没法伪造，但响应可以模拟——假装交易已上链、返回任意 receipt、模拟若干 confirmation。',
+
+      'tail.eyebrow': '// 文件结束',
+      'tail.h':       '给 window.ethereum 的 Wireshark。',
+      'foot.tag':       '一群受够了 console.log(payload) 的开发者做的。',
+      'foot.product':   '产品',
+      'foot.resources': '资源',
+      'foot.community': '社区',
+      'foot.legal':     '© 2026 DApp Inspector · Apache 2.0',
+    },
+  };
+
+  // ===========================================================================
+  // Language priority:
+  //   1. URL path /en/ or /zh/  — definitive (the page sits at that URL)
+  //   2. ?lang= query param      — for share links / debugging
+  //   3. localStorage di-lang    — last manual choice
+  //   4. navigator.language      — browser preference
+  //   5. zh fallback             — design EDITMODE default
+  // ===========================================================================
+  const LANG_PATH_RE = /\/(en|zh)(\/|$)/;
+  function langFromPath() {
+    const m = LANG_PATH_RE.exec(location.pathname);
+    return m ? m[1] : null;
+  }
+  function pickLang() {
+    const fromPath = langFromPath();
+    if (fromPath) return fromPath;
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get('lang');
+    if (fromUrl === 'en' || fromUrl === 'zh') return fromUrl;
+    const stored = localStorage.getItem('di-lang');
+    if (stored === 'en' || stored === 'zh') return stored;
+    const nav = (navigator.language || '').toLowerCase();
+    if (nav.startsWith('zh')) return 'zh';
+    if (nav.startsWith('en')) return 'en';
+    return 'zh';
+  }
+  let LANG = pickLang();
+
+  // Sync the canonical to the real URL — the static canonical is the
+  // x-default root, but when served from /en/ or /zh/ we want the locale
+  // copy to be its own canonical so duplicate-content signals stay clean.
+  (function syncCanonical() {
+    const c = document.querySelector('link[rel="canonical"]');
+    if (!c) return;
+    const fromPath = langFromPath();
+    if (fromPath) {
+      c.href = location.origin + location.pathname.replace(LANG_PATH_RE, '/' + fromPath + '/');
+    }
+  })();
+
+  function st(k) {
+    const d = SITE_STRINGS[LANG] || SITE_STRINGS.en;
+    return d[k] != null ? d[k] : (SITE_STRINGS.en[k] != null ? SITE_STRINGS.en[k] : k);
+  }
+
+  function applyI18n(root) {
+    (root || document).querySelectorAll('[data-st]').forEach(el => {
+      const v = st(el.getAttribute('data-st'));
+      el.textContent = v;
+    });
+  }
+  // Build the locale-specific URL, preserving everything else (hash, query).
+  // - /xx/index.html  → /<next>/index.html
+  // - /xx/            → /<next>/
+  // - /               → /<next>/
+  // - /sub/path/      → /sub/path/<next>/  (covers GH Pages project paths)
+  function localePath(next) {
+    const path = location.pathname;
+    if (LANG_PATH_RE.test(path)) {
+      return path.replace(LANG_PATH_RE, '/' + next + '$2');
+    }
+    return path.replace(/\/?$/, '/') + next + '/';
+  }
+  function setLang(next) {
+    if (next !== 'en' && next !== 'zh') return;
+    if (next === LANG) return;
+    try { localStorage.setItem('di-lang', next); } catch (_) {}
+    location.href = localePath(next) + location.search + location.hash;
+  }
+
+  // ===========================================================================
+  // Static section rendering
+  // ===========================================================================
+  function renderMarquee() {
+    const track = document.getElementById('marquee-track');
+    const text = 'WIRE-LEVEL CAPTURE · ABI DECODE · ONE-CLICK REPLAY · MOCK ANY RESPONSE · LOCAL-FIRST · APACHE 2.0 · ';
+    track.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const sp = document.createElement('span');
+      sp.textContent = text;
+      track.appendChild(sp);
+    }
+  }
+
+  function renderHero() {
+    // Bump alongside package.json on each release; the bilingual changelog
+    // assertion in tests/unit/changelog.test.ts already pins version → top
+    // changelog entry, so this is the only out-of-tree spot to remember.
+    document.getElementById('hero-build').textContent = 'v0.1.0 · Apache 2.0';
+  }
+
+  function renderFeatures() {
+    const list = document.getElementById('flist');
+    list.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const k = 'f' + (i + 1);
+      const li = document.createElement('li');
+      li.className = 'vc-fli';
+      const n = document.createElement('div');
+      n.className = 'vc-fli-n mono';
+      n.textContent = String(i + 1).padStart(2, '0') + '.';
+      const t = document.createElement('div');
+      t.className = 'vc-fli-t';
+      t.textContent = st(k + '.t');
+      const d = document.createElement('div');
+      d.className = 'vc-fli-d';
+      d.textContent = st(k + '.d');
+      li.append(n, t, d);
+      list.appendChild(li);
+    }
+  }
+
+  function renderHowSteps() {
+    const wrap = document.getElementById('how-steps');
+    wrap.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const k = 's' + (i + 1);
+      const row = document.createElement('div');
+      row.className = 'vc-dstep';
+      const tag = document.createElement('span');
+      tag.className = 'mono';
+      tag.textContent = '[' + String(i + 1).padStart(2, '0') + ']';
+      const sp = document.createTextNode(' ');
+      const strong = document.createElement('strong');
+      strong.textContent = st('how.' + k + '.t');
+      const dim = document.createElement('span');
+      dim.className = 'mono vc-dim';
+      dim.textContent = ' — ' + st('how.' + k + '.d');
+      row.append(tag, sp, strong, dim);
+      wrap.appendChild(row);
+    }
+  }
+
+  function renderUseCases() {
+    const wrap = document.getElementById('ulist');
+    wrap.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const u = 'u' + (i + 1);
+      const item = document.createElement('div');
+      item.className = 'vc-uitem';
+      const h = document.createElement('div');
+      h.className = 'vc-uitem-h mono';
+      h.textContent = 'CASE.0' + (i + 1);
+      const t = document.createElement('div');
+      t.className = 'vc-uitem-t';
+      t.textContent = st('use.' + u + '.t');
+      const d = document.createElement('div');
+      d.className = 'vc-uitem-d';
+      d.textContent = st('use.' + u + '.d');
+      item.append(h, t, d);
+      wrap.appendChild(item);
+    }
+  }
+
+  function renderFaq() {
+    const wrap = document.getElementById('faq-list');
+    wrap.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+      const det = document.createElement('details');
+      det.className = 'vc-faq-item';
+      if (i === 1) det.open = true;
+      const sum = document.createElement('summary');
+      const tag = document.createElement('span');
+      tag.className = 'mono';
+      tag.textContent = 'Q.0' + i;
+      const sp = document.createTextNode(' ' + st('faq.q' + i));
+      sum.append(tag, sp);
+      const ans = document.createElement('div');
+      ans.className = 'vc-faq-a';
+      ans.textContent = st('faq.a' + i);
+      det.append(sum, ans);
+      wrap.appendChild(det);
+    }
+  }
+
+  // ===========================================================================
+  // Demo console — visually + behaviorally aligned with src/panel/* (Toolbar,
+  // FilterBar, MethodList, Detail/Header, Detail/Tabs, Detail/CopyMenu).
+  // ===========================================================================
+
+  // Mirrors src/panel/MethodList.tsx KIND_STYLE
+  const KIND = {
+    read:      { tag: 'RD', color: 'var(--fg-muted)' },
+    write:     { tag: 'WR', color: 'var(--amber)' },
+    sign:      { tag: 'SG', color: 'var(--violet)' },
+    subscribe: { tag: 'SB', color: 'var(--accent)' },
+  };
+  // Mirrors src/panel/Detail/Header.tsx STATUS_COLOR — "mocked" overrides
+  // the actual status when call.mocked is true.
+  const STATUS = {
+    ok:      { dot: 'var(--green)',  label: 'OK' },
+    error:   { dot: 'var(--red)',    label: 'ERROR' },
+    pending: { dot: 'var(--accent)', label: 'PENDING' },
+    mocked:  { dot: 'var(--violet)', label: 'MOCKED' },
+  };
+
+  // Filter chips — id / labelKey / type / accent. Identical to FilterBar.tsx.
+  const CHIP_DEFS = [
+    { id: 'all',       key: 'panel.filters.all',       type: 'kind'   },
+    { id: 'read',      key: 'panel.filters.read',      type: 'kind',   color: 'var(--fg-muted)' },
+    { id: 'write',     key: 'panel.filters.write',     type: 'kind',   color: 'var(--amber)' },
+    { id: 'sign',      key: 'panel.filters.sign',      type: 'kind',   color: 'var(--violet)' },
+    { id: 'subscribe', key: 'panel.filters.subscribe', type: 'kind',   color: 'var(--accent)' },
+    { id: 'errors',    key: 'panel.filters.errors',    type: 'status', color: 'var(--red)',    glyph: '✕' },
+    { id: 'mocked',    key: 'panel.filters.mocked',    type: 'status', color: 'var(--violet)', glyph: '⊘' },
+    { id: 'blocked',   key: 'panel.filters.blocked',   type: 'status', color: 'var(--amber)',  glyph: '⃠' },
+    { id: 'throttled', key: 'panel.filters.throttled', type: 'status', color: 'var(--amber)',  glyph: '◷' },
+    { id: 'replayed',  key: 'panel.filters.replayed',  type: 'status', color: 'var(--accent)', glyph: '↻' },
+  ];
+
+  // Seed RPC calls. Each carries the same fields as @shared/types.CapturedCall:
+  // method, kind, durationMs, origin, chainId, status, params, result/error.
+  // Plus optional contract / decodedFn / decodedArgs / decodedSource (Decoded
+  // tab), risks (Risks list), throttleMs / replayed / mocked / blocked (tags).
+  // Order matters: the first 5 get seeded as init-* on first paint; the
+  // rest are added by the ticker. We front-load a diverse set so the panel
+  // looks alive immediately, and default-select the eth_sendTransaction
+  // mocked-approve so the Decoded view + UNLIMITED APPROVAL risk are
+  // visible without interaction.
+  const SEED = [
+    { m: 'eth_chainId',                kind: 'read',  dur: 3,    chain: '0x89', status: 'ok',
+      params: [], result: '0x89' },
+    { m: 'eth_accounts',               kind: 'read',  dur: 2,    chain: '0x89', status: 'ok',
+      params: [], result: ['0x6B17…1d0F'] },
+    { m: 'wallet_requestPermissions',  kind: 'sign',  dur: 1481, chain: '0x89', status: 'ok',
+      params: [{ eth_accounts: {} }],
+      result: [{ caveats: [], invoker: 'polymarket.com', parentCapability: 'eth_accounts' }] },
+    { m: 'eth_estimateGas',            kind: 'read',  dur: 142,  chain: '0x1',  status: 'ok',
+      throttleMs: 100,
+      contract: '0x4D973F7B16dE1F1F84Bf3C1c9E6f9F3', decodedFn: 'approve(address spender, uint256 amount)', decodedSource: 'BUILTIN',
+      decodedArgs: [
+        { name: 'spender', type: 'address', value: '0x000000000022D473030F116dDEE9F6B43aC78BA3' },
+        { name: 'amount',  type: 'uint256', value: '115792089237316195423570985008687907853269984665640564039457584007913129639935' },
+      ],
+      params: [{ to: '0x4D973F7…f9F3', data: '0x095ea7b3000000000000000000000000000000000000000000000022D473030F116dDEE9F6B43aC78BA3ffffffffffffffffffffffffffffffffffffffff' }],
+      result: '0x11170' },
+    { m: 'eth_sendTransaction',        kind: 'write', dur: 1820, chain: '0x1',  status: 'ok', mocked: true,
+      contract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      decodedFn: 'approve(address spender, uint256 amount)',
+      decodedSource: 'SOURCIFY',
+      decodedArgs: [
+        { name: 'spender', type: 'address', value: '0xE592427A0AEce92De3Edee1F18E0157C05861564' },
+        { name: 'amount',  type: 'uint256', value: '115792089237316195423570985008687907853269984665640564039457584007913129639935' },
+      ],
+      risks: [{ label: 'UNLIMITED APPROVAL', msg: 'This grants the spender permission to move an effectively unlimited amount of this token.' }],
+      params: [{ to: '0xA0b8…eB48', value: '0x0', data: '0x095ea7b3000000000000000000000000E592427A0AEce92De3Edee1F18E0157C05861564ffffffffffffffffffffffffffffffffffffffff' }],
+      result: '0xMOCKED…' },
+    { m: 'eth_subscribe',              kind: 'subscribe', dur: 28, chain: '0x1', status: 'ok',
+      params: ['newHeads'], result: '0x9cef478b…b3a1' },
+    { m: 'wallet_switchEthereumChain', kind: 'write', dur: 8,    chain: '0x1',  status: 'ok',
+      params: [{ chainId: '0x1' }], result: null },
+    { m: 'personal_sign',              kind: 'sign',  dur: 1029, chain: '0x1',  status: 'pending',
+      decodedFn: 'EIP-4361 sign-in message', decodedSource: 'BUILTIN',
+      signedMessage: 'polymarket.com wants you to sign in with your Ethereum account:\n0x6B17…1d0F\n\nWelcome to Polymarket — read & accept the terms.\n\nNonce: 8c4f1e\nIssued At: 2026-05-04T17:02:11Z',
+      params: ['0x576c…6e74', '0x6B17…1d0F'], result: '(awaiting signature…)' },
+    { m: 'wallet_revokePermissions',   kind: 'write', dur: 148,  chain: '0x1',  status: 'error',
+      params: [{ eth_accounts: {} }],
+      // Mirrors @shared/types CapturedCall — error rows carry `error`, not `result`.
+      error: { code: 4001, message: 'User rejected the request.' } },
+  ];
+
+  const ORIGIN = 'https://polymarket.com';
+  const PROVIDER_NAME = 'MetaMask';
+  const CHAIN_NAMES = { '0x1': 'Ethereum', '0x89': 'Polygon' };
+
+  const startT = Date.now();
+  let calls = SEED.slice(0, 5).map(function (c, i) {
+    return Object.assign({}, c, {
+      id: 'init-' + i,
+      origin: ORIGIN,
+      startedAt: startT - (5 - i) * 800,
+    });
+  });
+  let selectedId = 'init-4'; // eth_sendTransaction (mocked, decoded approve, UNLIMITED APPROVAL risk)
+  let recording = true;
+  let detailTab = 'decoded';
+  let search = '';
+  const activeKinds = new Set();
+  const onlyFlags = { errors: false, mocked: false, blocked: false, throttled: false, replayed: false };
+  const mockedRules = {};
+  const blockedRules = {};
+  let tickerIdx = 0;
+  let tickerTimer = null;
+  let copyMenuOpen = false;
+  let copyResult = null;     // { fmt: 'jsonRpc'|'markdown', ok: boolean } | null
+  let copyToastTimer = null;
+
+  function applyRules(c) {
+    if (blockedRules[c.m]) return Object.assign({}, c, { blocked: true, status: 'error', dur: 0, error: { code: 4900, message: 'Blocked by user rule' }, result: undefined });
+    if (mockedRules[c.m])  return Object.assign({}, c, { mocked: true, dur: 0.4, result: mockedRules[c.m], error: undefined });
+    return c;
+  }
+
+  function tick() {
+    if (!recording) { tickerTimer = null; return; }
+    const next = SEED[tickerIdx % SEED.length];
+    const c = applyRules(Object.assign({}, next, {
+      id: 'c-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      origin: ORIGIN,
+      startedAt: Date.now(),
+    }));
+    calls.push(c);
+    if (calls.length > 80) calls = calls.slice(-80);
+    tickerIdx++;
+    renderList();
+    renderDetail();
+    schedule();
+  }
+  function schedule() {
+    clearTimeout(tickerTimer);
+    tickerTimer = setTimeout(tick, 1300 + Math.random() * 900);
+  }
+
+  function getSelected() {
+    return calls.find(function (c) { return c.id === selectedId; }) || calls[calls.length - 1];
+  }
+
+  function statusFor(c) {
+    return c.mocked ? 'mocked' : (c.status || 'ok');
+  }
+  function kindMeta(c) { return KIND[c.kind] || KIND.read; }
+
+  // Filtering — same logic as src/panel/MethodList.tsx#filtered
+  function visibleCalls() {
+    const q = search.trim().toLowerCase();
+    return calls.filter(function (c) {
+      if (activeKinds.size > 0 && !activeKinds.has(c.kind)) return false;
+      if (onlyFlags.errors && c.status !== 'error') return false;
+      if (onlyFlags.mocked && !c.mocked) return false;
+      if (onlyFlags.blocked && !c.blocked) return false;
+      if (onlyFlags.throttled && !((c.throttleMs || 0) > 0)) return false;
+      if (onlyFlags.replayed && !c.replayed) return false;
+      if (!q) return true;
+      return c.m.toLowerCase().includes(q);
+    });
+  }
+
+  function counts() {
+    const c = { all: calls.length, read: 0, write: 0, sign: 0, subscribe: 0, errors: 0, mocked: 0, blocked: 0, throttled: 0, replayed: 0 };
+    calls.forEach(function (call) {
+      c[call.kind] = (c[call.kind] || 0) + 1;
+      if (call.status === 'error') c.errors++;
+      if (call.mocked) c.mocked++;
+      if (call.blocked) c.blocked++;
+      if ((call.throttleMs || 0) > 0) c.throttled++;
+      if (call.replayed) c.replayed++;
+    });
+    return c;
+  }
+
+  function fmtMs(ms) {
+    if (ms == null) return '—';
+    return ms < 1000 ? ms.toFixed(1) + 'ms' : (ms / 1000).toFixed(2) + 's';
+  }
+  function fmtLocalTs(ts) {
+    const d = new Date(ts);
+    const p2 = function (n) { return String(n).padStart(2, '0'); };
+    const p3 = function (n) { return String(n).padStart(3, '0'); };
+    return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+      ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds()) + '.' + p3(d.getMilliseconds());
+  }
+  // Mirrors src/shared/chains.ts#fmtChain(input, 'name+hex'): "Ethereum · 0x1".
+  function fmtChain(hex) {
+    if (!hex) return '—';
+    const name = CHAIN_NAMES[hex];
+    if (!name) return hex;
+    return name + ' · ' + hex;
+  }
+  function safeHost(url) {
+    try { return new URL(url).host; } catch (_) { return url; }
+  }
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // -- Toolbar count + record button --
+  function renderToolbar() {
+    document.getElementById('demo-count').textContent = st('panel.count').replace('{n}', visibleCalls().length);
+    const rec = document.getElementById('btn-record');
+    rec.classList.toggle('recording', recording);
+    rec.title = recording ? st('panel.toolbar.pause') : st('panel.toolbar.record');
+    document.getElementById('btn-clear').title    = st('panel.toolbar.clear');
+    document.getElementById('btn-settings').title = st('panel.toolbar.settings');
+    document.getElementById('demo-search').placeholder = st('panel.toolbar.search');
+  }
+
+  // -- Filter chips --
+  function renderFilterBar() {
+    const bar = document.getElementById('demo-filterbar');
+    bar.innerHTML = '';
+    const cs = counts();
+    const allActive = activeKinds.size === 0 && !onlyFlags.errors && !onlyFlags.mocked && !onlyFlags.blocked && !onlyFlags.throttled && !onlyFlags.replayed;
+
+    CHIP_DEFS.forEach(function (def, i) {
+      const prev = CHIP_DEFS[i - 1];
+      if (prev && prev.type === 'kind' && def.type === 'status') {
+        bar.appendChild(el('span', 'demo-divider'));
+      }
+      const isActive =
+        def.id === 'all' ? allActive :
+        def.type === 'kind' ? activeKinds.has(def.id) :
+        onlyFlags[def.id];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'demo-chip' + (isActive ? ' on' : '');
+      if (def.type === 'kind' && def.color && !isActive) {
+        const dot = el('span', 'demo-chip-dot');
+        dot.style.color = def.color;
+        btn.appendChild(dot);
+      }
+      if (def.type === 'status' && def.glyph) {
+        const g = el('span', 'demo-chip-glyph', def.glyph);
+        g.style.color = isActive ? 'var(--fg)' : def.color;
+        btn.appendChild(g);
+      }
+      btn.appendChild(el('span', null, st(def.key)));
+      btn.appendChild(el('span', 'demo-chip-n', String(cs[def.id] || 0)));
+      btn.addEventListener('click', function () {
+        if (def.id === 'all') {
+          activeKinds.clear();
+          Object.keys(onlyFlags).forEach(function (k) { onlyFlags[k] = false; });
+        } else if (def.type === 'kind') {
+          if (activeKinds.has(def.id)) activeKinds.delete(def.id);
+          else activeKinds.add(def.id);
+        } else {
+          onlyFlags[def.id] = !onlyFlags[def.id];
+        }
+        renderFilterBar(); renderList(); renderToolbar();
+      });
+      bar.appendChild(btn);
+    });
+
+    // Provenance chips — host / wallet / chain
+    bar.appendChild(el('span', 'demo-divider'));
+    const host = safeHost(ORIGIN);
+    bar.appendChild(provChip('🌐', host));
+    bar.appendChild(provChip('▦', PROVIDER_NAME));
+    const sel = getSelected();
+    bar.appendChild(provChip('⊡', fmtChain((sel && sel.chain) || '0x1')));
+  }
+  function provChip(glyph, label) {
+    const c = el('span', 'demo-prov-chip');
+    c.appendChild(el('span', 'demo-meta-glyph', glyph));
+    c.appendChild(el('span', null, label));
+    return c;
+  }
+
+  // -- List head + rows --
+  function renderListHead() {
+    const head = document.getElementById('demo-list-head');
+    head.innerHTML = '';
+    const m = el('div', null, st('panel.list.method'));
+    m.style.flex = '1';
+    head.appendChild(m);
+    const d = el('div', null, st('panel.list.duration'));
+    d.style.cssText = 'width:60px;text-align:right;';
+    head.appendChild(d);
+  }
+
+  function renderList() {
+    renderListHead();
+    const list = document.getElementById('demo-list');
+    list.innerHTML = '';
+    const filtered = visibleCalls();
+    if (filtered.length === 0) {
+      list.appendChild(el('div', 'demo-empty', '// ' + st('demo.waiting')));
+      renderToolbar();
+      return;
+    }
+    filtered.forEach(function (c) {
+      const k = kindMeta(c);
+      const stt = statusFor(c);
+      const sCol = (STATUS[stt] || STATUS.ok).dot;
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'demo-row'
+        + (c.id === selectedId ? ' on' : '')
+        + (c.status === 'error' ? ' err' : '')
+        + ((c.mocked || c.blocked) ? ' no-dot' : '');
+      row.addEventListener('click', function () {
+        selectedId = c.id;
+        // Auto-jump to Decoded if call has decodable content (mirrors Tabs.tsx)
+        if (c.decodedFn || c.signedMessage) detailTab = 'decoded';
+        else if (detailTab === 'decoded') detailTab = 'params';
+        renderList(); renderDetail();
+      });
+      const dot = el('span', 'demo-row-dot');
+      dot.style.color = sCol;
+      row.appendChild(dot);
+      const tag = el('span', 'demo-row-kindtag', k.tag);
+      tag.style.color = k.color;
+      tag.style.background = 'color-mix(in oklab, ' + k.color + ' 14%, transparent)';
+      row.appendChild(tag);
+      row.appendChild(el('span', 'demo-row-method', c.m));
+      // Tags: replayed (R), blocked (B), throttled (T), mocked (M)
+      if (c.replayed) row.appendChild(flagTag('R', 'var(--accent)'));
+      if (c.blocked)  row.appendChild(flagTag('B', 'var(--amber)'));
+      if ((c.throttleMs || 0) > 0) row.appendChild(flagTag('T', 'var(--amber)'));
+      if (c.mocked)   row.appendChild(flagTag('M', 'var(--violet)'));
+      row.appendChild(el('span', 'demo-row-dur', fmtMs(c.dur)));
+      list.appendChild(row);
+    });
+    list.scrollTop = list.scrollHeight;
+    renderToolbar();
+    renderStatusbar();
+  }
+  function flagTag(label, color) {
+    const t = el('span', 'demo-row-flag', label);
+    t.style.color = color;
+    t.style.background = 'color-mix(in oklab, ' + color + ' 14%, transparent)';
+    return t;
+  }
+
+  // -- Detail header + tabs + body --
+  function renderDetail() {
+    const detail = document.getElementById('demo-detail');
+    detail.innerHTML = '';
+    const sel = getSelected();
+    if (!sel) {
+      detail.appendChild(el('div', 'demo-empty', st('demo.select')));
+      return;
+    }
+
+    // Header
+    const header = el('div', 'demo-detail-header');
+    const row1 = el('div', 'demo-detail-row1');
+    row1.appendChild(el('div', 'demo-detail-method', sel.m));
+    row1.appendChild(statusBadge(sel));
+    row1.appendChild(actionsCluster(sel));
+    header.appendChild(row1);
+    header.appendChild(metaRow(sel));
+    detail.appendChild(header);
+
+    // Tabs
+    const hasDecoded = !!(sel.decodedFn || sel.signedMessage);
+    const tabIds = hasDecoded ? ['decoded', 'params', 'result', 'timing', 'raw'] : ['params', 'result', 'timing', 'raw'];
+    if (!hasDecoded && detailTab === 'decoded') detailTab = 'params';
+    const tabsEl = el('div', 'demo-tabs');
+    tabIds.forEach(function (id) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'demo-tab' + (detailTab === id ? ' on' : '');
+      b.textContent = st('panel.detail.tabs.' + id);
+      b.addEventListener('click', function () { detailTab = id; renderDetail(); });
+      tabsEl.appendChild(b);
+    });
+    detail.appendChild(tabsEl);
+
+    // Body
+    const body = el('div', 'demo-tab-body scroll');
+    if (detailTab === 'decoded') renderDecoded(body, sel);
+    else if (detailTab === 'params') renderParams(body, sel);
+    else if (detailTab === 'result') renderResult(body, sel);
+    else if (detailTab === 'timing') renderTiming(body, sel);
+    else renderRaw(body, sel);
+    detail.appendChild(body);
+  }
+
+  function statusBadge(c) {
+    const stt = statusFor(c);
+    const meta = STATUS[stt] || STATUS.ok;
+    const b = el('span', 'demo-status-badge', meta.label);
+    b.style.color = meta.dot;
+    b.style.background = 'color-mix(in oklab, ' + meta.dot + ' 14%, transparent)';
+    b.style.border = '1px solid color-mix(in oklab, ' + meta.dot + ' 30%, transparent)';
+    return b;
+  }
+
+  function actionsCluster(c) {
+    const wrap = el('div', 'demo-detail-actions');
+    wrap.appendChild(actionBtn('replay', '↻', st('panel.detail.replay'), function () {
+      const sel = getSelected(); if (!sel) return;
+      const next = applyRules(Object.assign({}, sel, {
+        id: 'c-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        startedAt: Date.now(),
+        replayed: true,
+        status: 'ok',
+      }));
+      calls.push(next); if (calls.length > 80) calls = calls.slice(-80);
+      flashAction('replay');
+      renderList(); renderDetail();
+    }));
+    wrap.appendChild(actionBtn('mock', '⊘', st('panel.detail.mock'), function () {
+      const sel = getSelected(); if (!sel) return;
+      mockedRules[sel.m] = '0xMOCKED…';
+      flashAction('mock');
+    }));
+    wrap.appendChild(actionBtn('block', '⃠', st('panel.detail.block'), function () {
+      const sel = getSelected(); if (!sel) return;
+      blockedRules[sel.m] = true;
+      flashAction('block');
+    }));
+    wrap.appendChild(copyCluster(c));
+    return wrap;
+  }
+  function actionBtn(id, glyph, label, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'demo-action-btn';
+    b.dataset.action = id;
+    b.appendChild(el('span', 'demo-action-glyph', glyph));
+    b.appendChild(el('span', null, label));
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function flashAction(id) {
+    const btn = document.querySelector('.demo-action-btn[data-action="' + id + '"]');
+    if (!btn) return;
+    btn.classList.add('demo-flash');
+    setTimeout(function () { btn.classList.remove('demo-flash'); }, 600);
+  }
+
+  // Mirrors src/panel/Detail/CopyMenu.tsx — "Copy as" header,
+  // inline status hint replacing the per-item hint on success/failure,
+  // 700 ms auto-close on success.
+  function copyCluster(c) {
+    const wrap = el('div', 'demo-copy-wrap');
+    const btn = actionBtn('copy', '⎘', st('panel.copy.button'), function (e) {
+      e.stopPropagation();
+      copyMenuOpen = !copyMenuOpen;
+      renderDetail();
+    });
+    wrap.appendChild(btn);
+    if (copyMenuOpen) {
+      const menu = el('div', 'demo-copy-menu');
+      menu.appendChild(el('div', 'demo-copy-title', st('panel.copy.title')));
+      menu.appendChild(copyItem('jsonRpc', '↓', st('panel.copy.jsonRpc'), st('panel.copy.jsonRpcHint'), function () {
+        copyText('jsonRpc', JSON.stringify(jsonRpcEnvelope(c), null, 2));
+      }));
+      menu.appendChild(copyItem('markdown', '⌘', st('panel.copy.markdown'), st('panel.copy.markdownHint'), function () {
+        copyText('markdown', markdownRow(c));
+      }));
+      wrap.appendChild(menu);
+    }
+    return wrap;
+  }
+  function copyItem(fmt, glyph, name, hint, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'demo-copy-item';
+    b.appendChild(el('span', 'demo-copy-glyph', glyph));
+    const col = el('div', 'demo-copy-col');
+    col.appendChild(el('div', 'demo-copy-name', name));
+    let hintText = hint;
+    let hintClass = 'demo-copy-hint';
+    if (copyResult && copyResult.fmt === fmt) {
+      hintText = copyResult.ok ? st('panel.copy.copied') : st('panel.copy.copyFailed');
+      hintClass += copyResult.ok ? ' ok' : ' err';
+    }
+    col.appendChild(el('div', hintClass, hintText));
+    b.appendChild(col);
+    if (copyResult && copyResult.fmt === fmt && copyResult.ok) {
+      b.appendChild(el('span', 'demo-copy-check', '✓'));
+    }
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function copyText(fmt, text) {
+    const done = function (ok) {
+      copyResult = { fmt: fmt, ok: ok };
+      renderDetail();
+      clearTimeout(copyToastTimer);
+      copyToastTimer = setTimeout(function () {
+        if (ok) copyMenuOpen = false;
+        copyResult = null;
+        renderDetail();
+      }, 700);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  }
+
+  function metaRow(c) {
+    const row = el('div', 'demo-detail-meta');
+    row.appendChild(metaBit('🌐', safeHost(c.origin)));
+    row.appendChild(metaBit('▦', PROVIDER_NAME));
+    if (c.chain) row.appendChild(metaBit('⊡', fmtChain(c.chain)));
+    row.appendChild(metaBit('⏱', fmtLocalTs(c.startedAt || Date.now())));
+    if (c.dur != null) row.appendChild(metaBit('⚡', fmtMs(c.dur)));
+    row.appendChild(el('span', 'demo-meta-id', '#' + (c.id || '').slice(0, 6)));
+    return row;
+  }
+  function metaBit(glyph, label) {
+    const b = el('span', 'demo-meta-bit');
+    b.appendChild(el('span', 'demo-meta-glyph mono', glyph));
+    b.appendChild(el('span', null, label));
+    return b;
+  }
+
+  // Mirrors color map in src/panel/Detail/Decoded.tsx#SOURCE_COLOR.
+  const SOURCE_COLOR = {
+    BUILTIN:  'var(--green)',
+    SOURCIFY: 'var(--accent)',
+    '4BYTE':  'var(--amber)',
+    CACHED:   'var(--accent)',
+  };
+
+  // Mirrors src/panel/Detail/Decoded.tsx — flat layout (no card wrapper),
+  // sections in order: signature+source, CONTRACT row, risks, ARGUMENTS,
+  // ArgsTable, raw-calldata toggle. Sign-message variant has its own block.
+  function renderDecoded(body, c) {
+    if (c.signedMessage) {
+      const head = el('div', 'demo-decoded-sigline');
+      head.appendChild(el('span', 'demo-decoded-sig', st('panel.detail.decoded.signedMessage')));
+      body.appendChild(head);
+      const pre = el('pre', 'demo-code');
+      pre.textContent = c.signedMessage;
+      body.appendChild(pre);
+      return;
+    }
+
+    if (c.decodedFn) {
+      const head = el('div', 'demo-decoded-sigline');
+      head.appendChild(el('span', 'demo-decoded-sig', c.decodedFn));
+      if (c.decodedSource) head.appendChild(sourceBadge(c.decodedSource));
+      body.appendChild(head);
+    }
+
+    if (c.contract) {
+      const row = el('div', 'demo-decoded-contract');
+      row.appendChild(el('span', 'demo-decoded-contract-k', st('panel.detail.decoded.contract')));
+      row.appendChild(el('span', 'demo-decoded-contract-v', c.contract));
+      body.appendChild(row);
+    }
+
+    if (c.risks && c.risks.length) {
+      body.appendChild(el('div', 'demo-section-label', st('panel.detail.decoded.risks')));
+      const list = el('div', 'demo-risk-list');
+      c.risks.forEach(function (r) {
+        const box = el('div', 'demo-risk');
+        box.appendChild(el('span', 'demo-risk-tag', r.label));
+        box.appendChild(el('span', 'demo-risk-msg', r.msg));
+        list.appendChild(box);
+      });
+      body.appendChild(list);
+    }
+
+    if (c.decodedArgs && c.decodedArgs.length) {
+      body.appendChild(el('div', 'demo-section-label', st('panel.detail.decoded.args')));
+      const table = el('div', 'demo-args-table');
+      c.decodedArgs.forEach(function (a, i) {
+        const row = el('div', 'demo-args-row');
+        const left = el('div', 'demo-args-name-col');
+        left.appendChild(el('span', 'demo-args-name', a.name || ('arg' + i)));
+        left.appendChild(el('span', 'demo-args-type', a.type));
+        row.appendChild(left);
+        row.appendChild(el('div', 'demo-args-val', String(a.value)));
+        table.appendChild(row);
+      });
+      body.appendChild(table);
+    }
+
+    // Raw calldata toggle (last params item with a `data` field, mirrors RawToggle)
+    const data = (Array.isArray(c.params) && c.params[0] && c.params[0].data) || null;
+    if (data) {
+      const wrap = el('div', 'demo-raw-toggle');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'demo-raw-btn';
+      const arrow = el('span', null, c._rawOpen ? '▾' : '▸');
+      btn.appendChild(arrow);
+      btn.appendChild(el('span', null, ' ' + (LANG === 'zh' ? '原始 calldata' : 'Raw calldata')));
+      btn.addEventListener('click', function () {
+        c._rawOpen = !c._rawOpen;
+        renderDetail();
+      });
+      wrap.appendChild(btn);
+      if (c._rawOpen) {
+        const pre = el('pre', 'demo-code');
+        pre.style.marginTop = '8px';
+        pre.textContent = data;
+        wrap.appendChild(pre);
+      }
+      body.appendChild(wrap);
+    }
+  }
+  function sourceBadge(src) {
+    const color = SOURCE_COLOR[src] || 'var(--accent)';
+    const b = el('span', 'demo-source-badge', src);
+    b.style.color = color;
+    b.style.background = 'color-mix(in oklab, ' + color + ' 14%, transparent)';
+    b.style.border = '1px solid color-mix(in oklab, ' + color + ' 30%, transparent)';
+    return b;
+  }
+
+  function renderParams(body, c) {
+    body.appendChild(el('div', 'demo-section-label', st('panel.detail.sec.params')));
+    body.appendChild(codeBlock(JSON.stringify(c.params, null, 2)));
+  }
+
+  function renderResult(body, c) {
+    body.appendChild(el('div', 'demo-section-label', st('panel.detail.sec.result')));
+    // Mirrors src/panel/Detail/Tabs.tsx — error rows render c.error, not c.result.
+    const isErr = c.status === 'error';
+    const v = isErr ? c.error : c.result;
+    const text = v == null ? '—' : (typeof v === 'string' ? v : JSON.stringify(v, null, 2));
+    body.appendChild(codeBlock(text, isErr));
+  }
+
+  function renderTiming(body, c) {
+    const total = c.dur || 0;
+    body.appendChild(el('div', 'demo-section-label', st('panel.detail.sec.timing').replace('{n}', total.toFixed(1))));
+    if (total <= 0) {
+      body.appendChild(el('div', null, '—'));
+      return;
+    }
+    // Mirrors src/panel/Detail/Tabs.tsx#TimingView synthesis
+    const throttle = c.throttleMs || 0;
+    const organic = Math.max(0, total - throttle);
+    const rpc = Math.max(5, Math.min(organic - 5, organic * 0.5));
+    const approval = (c.kind === 'sign' || c.kind === 'write') ? Math.max(0, organic - rpc - 8) : 0;
+    const dapp = 2; const queue = 1;
+    const ret = Math.max(0, organic - dapp - queue - approval - rpc);
+    const rows = [
+      { k: 'dapp',  ms: dapp,  color: 'var(--fg-muted)' },
+      { k: 'queue', ms: queue, color: 'var(--fg-dim)' },
+    ];
+    let cursor = dapp + queue;
+    if (throttle > 0) { rows.push({ k: 'throttle', ms: throttle, color: 'var(--amber)' }); cursor += throttle; }
+    rows.push({ k: 'approval', ms: approval, color: 'var(--violet)' });
+    rows.push({ k: 'rpc',      ms: rpc,      color: 'var(--accent)' });
+    rows.push({ k: 'return',   ms: ret,      color: 'var(--fg-muted)' });
+    const wrap = el('div', 'demo-timing');
+    let off = 0;
+    rows.forEach(function (r) {
+      const tr = el('div', 'demo-timing-row');
+      tr.appendChild(el('span', 'demo-timing-label', st('panel.detail.timing.' + r.k)));
+      const bar = el('div', 'demo-timing-bar');
+      const fill = el('div', 'demo-timing-fill');
+      fill.style.left = Math.max(0, Math.min(100, (off / total) * 100)) + '%';
+      fill.style.width = Math.max(0.5, Math.min(100, (r.ms / total) * 100)) + '%';
+      fill.style.background = r.color;
+      bar.appendChild(fill);
+      tr.appendChild(bar);
+      tr.appendChild(el('span', 'demo-timing-ms', r.ms.toFixed(1) + 'ms'));
+      wrap.appendChild(tr);
+      off += r.ms;
+    });
+    body.appendChild(wrap);
+  }
+
+  function renderRaw(body, c) {
+    body.appendChild(el('div', 'demo-section-label', st('panel.detail.sec.raw')));
+    body.appendChild(codeBlock(JSON.stringify(jsonRpcEnvelope(c), null, 2)));
+  }
+
+  // Mirrors src/shared/call-export.ts#toJsonRpcEnvelope.
+  function jsonRpcEnvelope(c) {
+    const params = c.params == null ? [] : (Array.isArray(c.params) ? c.params : [c.params]);
+    const env = { jsonrpc: '2.0', id: 1, method: c.m, params: params };
+    if (c.status === 'ok' && c.result !== undefined) env.result = c.result;
+    else if (c.status === 'error' && c.error) env.error = c.error;
+    return env;
+  }
+  // Mirrors src/shared/call-export.ts#toMarkdownRow.
+  function markdownRow(c) {
+    const host = safeHost(c.origin || '') || '—';
+    const duration = (c.dur != null) ? c.dur.toFixed(1) + 'ms' : '—';
+    const status = c.mocked ? 'MOCKED' : (c.status || 'ok').toUpperCase();
+    const v = c.status === 'error' ? c.error : c.result;
+    const result = compactValue(v);
+    return [
+      '| Method | Origin | Time | Status | Result |',
+      '|---|---|---|---|---|',
+      '| `' + c.m + '` | `' + host + '` | ' + duration + ' | ' + status + ' | `' + result + '` |',
+    ].join('\n');
+  }
+  // Same shape as src/shared/call-export.ts#compactValue — single-line, capped.
+  function compactValue(v) {
+    if (v == null) return '—';
+    if (typeof v === 'string') return v.length > 60 ? v.slice(0, 57) + '…' : v;
+    try {
+      const s = JSON.stringify(v);
+      return s.length > 60 ? s.slice(0, 57) + '…' : s;
+    } catch (_) { return String(v); }
+  }
+
+  function codeBlock(text, err) {
+    const pre = el('pre', 'demo-code' + (err ? ' err' : ''));
+    pre.textContent = text;
+    return pre;
+  }
+
+  // -- Toolbar handlers --
+  function onRecord() {
+    recording = !recording;
+    if (recording) schedule();
+    else clearTimeout(tickerTimer);
+    renderToolbar();
+    renderStatusbar();
+  }
+  function onClearAll() {
+    calls = []; selectedId = null;
+    Object.keys(mockedRules).forEach(function (k) { delete mockedRules[k]; });
+    Object.keys(blockedRules).forEach(function (k) { delete blockedRules[k]; });
+    renderList(); renderDetail(); renderFilterBar();
+  }
+
+  // Mirrors src/panel/StatusBar.tsx
+  function renderStatusbar() {
+    const sb = document.getElementById('demo-statusbar');
+    sb.innerHTML = '';
+    const status = el('span', 'demo-status-bit ' + (recording ? 'live' : 'idle'),
+      recording ? st('panel.status.connected') : st('panel.status.idle'));
+    sb.appendChild(status);
+    sb.appendChild(el('span', 'demo-status-total', st('panel.status.total').replace('{n}', calls.length)));
+    sb.appendChild(el('span', 'demo-status-shortcut', st('panel.status.shortcut').replace('{k}', '⌘K')));
+  }
+
+  function refreshDemo() {
+    renderToolbar(); renderFilterBar(); renderList(); renderDetail(); renderStatusbar();
+  }
+
+  // ===========================================================================
+  // Boot
+  // ===========================================================================
+  document.documentElement.lang = LANG;
+  applyI18n();
+  renderMarquee();
+  renderHero();
+  renderFeatures();
+  renderHowSteps();
+  renderUseCases();
+  renderFaq();
+  refreshDemo();
+
+  document.getElementById('btn-record').addEventListener('click', onRecord);
+  document.getElementById('btn-clear').addEventListener('click', onClearAll);
+  document.getElementById('btn-settings').addEventListener('click', function (e) { e.preventDefault(); });
+  document.getElementById('demo-search').addEventListener('input', function (e) {
+    search = e.target.value;
+    renderList();
+  });
+  // Close copy menu on outside click
+  document.addEventListener('click', function (e) {
+    if (!copyMenuOpen) return;
+    if (e.target.closest && e.target.closest('.demo-copy-wrap')) return;
+    copyMenuOpen = false; renderDetail();
+  });
+
+  // Lang toggle: real anchor tags so right-click / ⌘-click / middle-click work.
+  // We set href to the locale path at runtime; clicks let the browser navigate.
+  document.querySelectorAll('.vc-langtoggle a[data-lang]').forEach(function (a) {
+    const tgt = a.dataset.lang;
+    if (tgt === LANG) a.classList.add('on');
+    a.href = localePath(tgt) + location.search + location.hash;
+    a.addEventListener('click', function (e) {
+      if (tgt === LANG) { e.preventDefault(); return; }
+      // Modifier-aware: let cmd/ctrl/middle click open in a new tab natively.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+      try { localStorage.setItem('di-lang', tgt); } catch (_) {}
+      // Let the anchor navigate normally; setLang is unused for clicks now.
+    });
+  });
+
+  // Honor OS reduce-motion preference
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('reduce-motion');
+  }
+
+  schedule();
+  </script>
+</body>
+</html>
