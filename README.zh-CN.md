@@ -3,6 +3,7 @@
   <h1>DApp Inspector</h1>
   <p><strong>一个用于检查和调试 DApp 与 EVM 钱包之间 Web3 RPC 通信的 Chrome DevTools 面板。</strong></p>
   <p>
+    <a href="https://chromewebstore.google.com/detail/dapp-inspector/bcjlcalkhkfkcchgdokgngemjeemgmcj"><img alt="chrome web store" src="https://img.shields.io/badge/chrome%20web%20store-install-4285f4?logo=googlechrome&logoColor=white"></a>
     <a href="https://github.com/beilunyang/dapp-inspector-extension/releases/latest"><img alt="latest release" src="https://img.shields.io/github/v/release/beilunyang/dapp-inspector-extension?label=release&color=8957e5"></a>
     <a href="https://github.com/beilunyang/dapp-inspector-extension/actions/workflows/build.yml"><img alt="build" src="https://github.com/beilunyang/dapp-inspector-extension/actions/workflows/build.yml/badge.svg"></a>
     <img alt="manifest v3" src="https://img.shields.io/badge/manifest-v3-8957e5">
@@ -60,7 +61,11 @@
 
 ## 安装
 
-### 通过 Release（推荐）
+### 通过 Chrome 应用商店（推荐）
+
+直接前往 [Chrome 应用商店页面](https://chromewebstore.google.com/detail/dapp-inspector/bcjlcalkhkfkcchgdokgngemjeemgmcj) 一键安装，新版本会自动更新。
+
+### 通过 Release zip
 
 1. 在 [Releases](https://github.com/beilunyang/dapp-inspector-extension/releases/latest) 页面下载 `dapp-inspector-<version>.zip`。
 2. 解压。

@@ -3,6 +3,7 @@
   <h1>DApp Inspector</h1>
   <p><strong>A Chrome DevTools panel for inspecting and debugging Web3 RPC traffic between DApps and EVM wallets.</strong></p>
   <p>
+    <a href="https://chromewebstore.google.com/detail/dapp-inspector/bcjlcalkhkfkcchgdokgngemjeemgmcj"><img alt="chrome web store" src="https://img.shields.io/badge/chrome%20web%20store-install-4285f4?logo=googlechrome&logoColor=white"></a>
     <a href="https://github.com/beilunyang/dapp-inspector-extension/releases/latest"><img alt="latest release" src="https://img.shields.io/github/v/release/beilunyang/dapp-inspector-extension?label=release&color=8957e5"></a>
     <a href="https://github.com/beilunyang/dapp-inspector-extension/actions/workflows/build.yml"><img alt="build" src="https://github.com/beilunyang/dapp-inspector-extension/actions/workflows/build.yml/badge.svg"></a>
     <img alt="manifest v3" src="https://img.shields.io/badge/manifest-v3-8957e5">
@@ -60,7 +61,11 @@
 
 ## Install
 
-### From a release (recommended)
+### From the Chrome Web Store (recommended)
+
+Install with one click from the [Chrome Web Store listing](https://chromewebstore.google.com/detail/dapp-inspector/bcjlcalkhkfkcchgdokgngemjeemgmcj). Auto-updates with each release.
+
+### From a release zip
 
 1. Download `dapp-inspector-<version>.zip` from the [latest Release](https://github.com/beilunyang/dapp-inspector-extension/releases/latest).
 2. Unzip it.
