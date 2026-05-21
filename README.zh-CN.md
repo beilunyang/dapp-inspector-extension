@@ -113,6 +113,25 @@ pnpm build      # 产出 ./dist
 
 React 18 · Zustand · Tailwind · TypeScript · Vite · `@crxjs/vite-plugin`（Manifest V3）· Vitest · Playwright。
 
+## 招募：更好的 Logo
+
+当前的 Logo 能用，但我们觉得项目值得一个更精致的版本。**如果你是设计师，欢迎来贡献。**
+
+我们期待的样子：
+
+- 在 16×16（工具栏图标）下清晰可辨，放大到 128×128（Chrome 应用商店图块）也站得住。
+- 能表达「检查 / 抓取 Web3 RPC 流量」的意象 —— 放大镜、示波器、嗅探器、控制台之类都行，不要再来一个泛用的以太坊菱形。
+- 在 Chrome 的浅色 / 深色主题下都能用。
+- 必须是原创作品，并以 Apache-2.0 协议授权（与项目一致），这样才能直接发布。
+
+贡献方式：
+
+1. **先开 Issue 对齐方向** —— 在 [GitHub Issues](https://github.com/beilunyang/dapp-inspector-extension/issues/new) 提交草稿 / 效果图 / 参考图，加 `logo` 标签。避免多人并行设计。
+2. 方向确定后，提交 PR 替换 `public/icons/icon.svg`（源文件），并执行 `pnpm gen:icons` 重新生成 16/32/48/128 的 PNG。`docs/store/assets/` 下的商店推广图可以一起更新，也可以后续单独提。
+3. 作者会在 Release Notes 和 Changelog 中署名致谢。
+
+不是设计师但有想法？也欢迎在 Issue 下评论 👍 / 👎，帮助筛选方案。
+
 ## 打赏
 
 如果这个工具帮你省下了时间，欢迎请作者一杯咖啡。

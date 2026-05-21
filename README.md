@@ -113,6 +113,25 @@ See the [privacy policy](https://bitibiti.com/dapp-inspector-extension/privacy.h
 
 React 18 · Zustand · Tailwind · TypeScript · Vite · `@crxjs/vite-plugin` (Manifest V3) · Vitest · Playwright.
 
+## Help wanted: a better logo
+
+The current logo gets the job done, but we think the project deserves something more polished. **If you're a designer, we'd love your contribution.**
+
+What we're looking for:
+
+- A mark that reads at 16×16 (toolbar icon) and still feels right at 128×128 (Chrome Web Store tile).
+- Something that hints at "inspecting Web3 RPC traffic" — a magnifying glass, scope, oscilloscope, sniffer, console, etc. Not another generic Ethereum diamond.
+- Works on light and dark Chrome themes.
+- Original artwork — must be licensed under Apache-2.0 (same as the project) so we can ship it.
+
+How to contribute:
+
+1. **Float the idea first** — open a [GitHub Issue](https://github.com/beilunyang/dapp-inspector-extension/issues/new) with a sketch / mockup / reference and tag it `logo`. This avoids two people designing in parallel.
+2. Once a direction is agreed, open a PR replacing `public/icons/icon.svg` (the source). Run `pnpm gen:icons` to regenerate the 16/32/48/128 PNGs. Promo tiles in `docs/store/assets/` can be updated in the same PR (or a follow-up).
+3. We'll credit the designer in the release notes and changelog.
+
+Not a designer but have strong opinions? 👍 / 👎 on proposals in the issue tracker is also useful.
+
 ## Donate
 
 If this tool saves you time, a small tip is hugely appreciated.
